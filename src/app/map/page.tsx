@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Activity,
   UserCircle,
@@ -10,8 +13,101 @@ import {
   TriangleAlert,
   Users,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type RiskLevel = "SAFE" | "MODERATE RISK" | "EVACUATE NOW";
+
+const DEFAULT_RISKS: Record<string, RiskLevel> = {
+  "Barangay Pag-asa": "SAFE",
+  "Barangay San Roque Marikina": "MODERATE RISK",
+  "Barangay Poblacion Leyte": "EVACUATE NOW",
+};
+
+function markerClasses(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW") {
+    return {
+      dot: "h-6 w-6 animate-pulse rounded-full border-4 border-white/30 bg-[var(--terracotta)]",
+      dotShadow: "0 0 20px rgba(199,84,38,0.6)",
+      label:
+        "rounded bg-[var(--terracotta)] px-2 py-0.5 text-[11px] font-extrabold text-white shadow-lg",
+    };
+  }
+  if (risk === "MODERATE RISK") {
+    return {
+      dot: "h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--golden-yellow)]",
+      dotShadow: "0 0 12px rgba(255,212,0,0.5)",
+      label:
+        "rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--golden-yellow)]",
+    };
+  }
+  return {
+    dot: "h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--leaf-green)]",
+    dotShadow: "0 0 12px rgba(135,216,158,0.5)",
+    label:
+      "rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--leaf-green)]",
+  };
+}
+
+function bottomSheetRiskLabel(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW") return "CRITICAL RISK";
+  if (risk === "MODERATE RISK") return "ADVISORY ACTIVE";
+  return "ALL CLEAR";
+}
 
 export default function MapPage() {
+  const [risks, setRisks] =
+    useState<Record<string, RiskLevel>>(DEFAULT_RISKS);
+
+  useEffect(() => {
+    const fetchRisks = async () => {
+      try {
+        const res = await fetch("/api/barangay/risk");
+        const data = await res.json();
+        if (data.risks && Object.keys(data.risks).length > 0) {
+          setRisks((prev) => ({ ...prev, ...data.risks }));
+        }
+      } catch {
+        // keep defaults on failure
+      }
+    };
+    fetchRisks();
+  }, []);
+
+  const pagasaRisk = risks["Barangay Pag-asa"] ?? "SAFE";
+  const sanRoqueRisk = risks["Barangay San Roque Marikina"] ?? "MODERATE RISK";
+  const poblacionRisk = risks["Barangay Poblacion Leyte"] ?? "EVACUATE NOW";
+
+  const pagasa = markerClasses(pagasaRisk);
+  const sanRoque = markerClasses(sanRoqueRisk);
+  const poblacion = markerClasses(poblacionRisk);
+
+  const bottomRisk = poblacionRisk;
+  const bottomLabel = bottomSheetRiskLabel(bottomRisk);
+  const bottomBorderColor =
+    bottomRisk === "EVACUATE NOW"
+      ? "border-[var(--terracotta)]"
+      : bottomRisk === "MODERATE RISK"
+        ? "border-[var(--golden-yellow)]"
+        : "border-[var(--leaf-green)]";
+  const bottomTextColor =
+    bottomRisk === "EVACUATE NOW"
+      ? "text-[var(--terracotta)]"
+      : bottomRisk === "MODERATE RISK"
+        ? "text-[var(--golden-yellow)]"
+        : "text-[var(--leaf-green)]";
+  const bottomBgColor =
+    bottomRisk === "EVACUATE NOW"
+      ? "bg-[color:var(--terracotta)]/12"
+      : bottomRisk === "MODERATE RISK"
+        ? "bg-[color:var(--golden-yellow)]/12"
+        : "bg-[color:var(--leaf-green)]/12";
+  const bottomBadgeBorder =
+    bottomRisk === "EVACUATE NOW"
+      ? "border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/20 text-[var(--terracotta)]"
+      : bottomRisk === "MODERATE RISK"
+        ? "border-[color:var(--golden-yellow)]/40 bg-[color:var(--golden-yellow)]/20 text-[var(--golden-yellow)]"
+        : "border-[color:var(--leaf-green)]/40 bg-[color:var(--leaf-green)]/20 text-[var(--leaf-green)]";
+
   return (
     <>
       {/* Top Navigation Bar */}
@@ -68,7 +164,7 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* Simulated Map Visual */}
+        {/* Map Visual */}
         <div className="absolute inset-0 z-0">
           <img
             className="h-full w-full object-cover opacity-60"
@@ -76,24 +172,31 @@ export default function MapPage() {
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDowZc37FD2lHsL6zaU5XwqZO4x2IB7Ux4dR6XijJKL3cKumHJKWYcnuOPRdLCLQ5oNLpdhMTmm0auQSy_DS7XtLrJkm0r7YwddShbrlvbyrDOE50LcOutmwdl4LrA0bNkez5xp9IijMmBIPVa2X1awl4nSK9k3q0HZfA9XbllYWxdyGsU7uLDZf9Omj3N8NVU8enJBPTb7JLZbPpvDoSot-nJNRvrL7AnNUgoiRILZ5Qrs1Ci98FsNiA9dPeBXVDd4sTULXQfjuhAE"
           />
 
-          {/* Map Markers */}
+          {/* Pag-asa marker */}
           <div className="absolute left-[45%] top-[35%] flex flex-col items-center">
-            <div className="h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--leaf-green)] shadow-[0_0_12px_rgba(135,216,158,0.5)]" />
-            <span className="mt-1 rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--leaf-green)]">
-              PAG-ASA
-            </span>
+            <div
+              className={pagasa.dot}
+              style={{ boxShadow: pagasa.dotShadow }}
+            />
+            <span className={cn("mt-1", pagasa.label)}>PAG-ASA</span>
           </div>
+
+          {/* San Roque marker */}
           <div className="absolute left-[30%] top-[55%] flex flex-col items-center">
-            <div className="h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--golden-yellow)] shadow-[0_0_12px_rgba(255,212,0,0.5)]" />
-            <span className="mt-1 rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--golden-yellow)]">
-              SAN ROQUE
-            </span>
+            <div
+              className={sanRoque.dot}
+              style={{ boxShadow: sanRoque.dotShadow }}
+            />
+            <span className={cn("mt-1", sanRoque.label)}>SAN ROQUE</span>
           </div>
+
+          {/* Poblacion marker */}
           <div className="absolute left-[55%] top-[50%] flex flex-col items-center">
-            <div className="h-6 w-6 animate-pulse rounded-full border-4 border-white/30 bg-[var(--terracotta)] shadow-[0_0_20px_rgba(199,84,38,0.6)]" />
-            <span className="mt-1 rounded bg-[var(--terracotta)] px-2 py-0.5 text-[11px] font-extrabold text-white shadow-lg">
-              POBLACION
-            </span>
+            <div
+              className={poblacion.dot}
+              style={{ boxShadow: poblacion.dotShadow }}
+            />
+            <span className={cn("mt-1", poblacion.label)}>POBLACION</span>
           </div>
         </div>
 
@@ -125,19 +228,30 @@ export default function MapPage() {
                   BARANGAY POBLACION
                 </h2>
               </div>
-              <div className="shrink-0 rounded-full border border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/20 px-3 py-1">
-                <span className="text-[11px] font-medium uppercase text-[var(--terracotta)]">
-                  CRITICAL RISK
+              <div
+                className={cn(
+                  "shrink-0 rounded-full border px-3 py-1",
+                  bottomBadgeBorder
+                )}
+              >
+                <span className="text-[11px] font-medium uppercase">
+                  {bottomLabel}
                 </span>
               </div>
             </div>
 
             {/* Risk Bulletin Card */}
-            <div className="mb-6 rounded-r-lg border-l-4 border-[var(--terracotta)] bg-[color:var(--terracotta)]/12 p-4">
+            <div
+              className={cn(
+                "mb-6 rounded-r-lg border-l-4 p-4",
+                bottomBorderColor,
+                bottomBgColor
+              )}
+            >
               <div className="mb-2 flex items-center gap-2">
-                <TriangleAlert className="h-5 w-5 text-[var(--terracotta)]" />
-                <span className="text-[18px] font-bold text-[var(--terracotta)]">
-                  EVACUATE NOW
+                <TriangleAlert className={cn("h-5 w-5", bottomTextColor)} />
+                <span className={cn("text-[18px] font-bold", bottomTextColor)}>
+                  {poblacionRisk}
                 </span>
               </div>
               <p className="text-[15px] font-normal leading-[1.5] text-[color:var(--on-surface)]/90">
@@ -168,4 +282,3 @@ export default function MapPage() {
     </>
   );
 }
-

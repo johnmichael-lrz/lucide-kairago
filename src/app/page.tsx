@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   MapPin,
@@ -18,15 +18,12 @@ import {
   Cloud,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { searchBarangays, type BarangayLocation } from "@/lib/barangay-geocoding";
+import { type Bulletin } from "@/lib/bulletin-schema";
+import { Toast } from "@/components/toast";
 
 type Scenario = "safe" | "moderate" | "evacuate";
-
-/** Recommended action spoken for each scenario (Web Speech API). */
-const RECOMMENDED_ACTION_VOICE: Record<Scenario, string> = {
-  safe: "No evacuation necessary. Monitor local channels",
-  moderate: "Prepare go-bag. Move valuables higher. Avoid riverbanks",
-  evacuate: "Move your community to higher ground immediately",
-};
+type Language = "ENGLISH" | "FILIPINO" | "CEBUANO";
 
 const RISK_LEVEL_LABEL: Record<Scenario, string> = {
   safe: "SAFE",
@@ -34,18 +31,29 @@ const RISK_LEVEL_LABEL: Record<Scenario, string> = {
   evacuate: "EVACUATE NOW",
 };
 
+const DEMO_TEXT: Record<Scenario, string> = {
+  safe: "Current atmospheric conditions indicate no immediate threat of flooding or severe weather in your area. Satellite data shows clear skies with minimal cloud formation. Local sensors report stable water levels across all primary monitoring stations.",
+  moderate:
+    "A sustained band of heavy rainfall is tracking toward your watershed. Runoff is expected to increase rapidly, with a high likelihood of street-level flooding in low-lying zones and near-channel communities within the next 6–12 hours.",
+  evacuate:
+    "Typhoon landfall is imminent. Forecast models indicate destructive winds and rapid surge in rainfall intensity. If you are within flood-prone areas, coastal zones, or near steep slopes, evacuate immediately to designated shelters and avoid travel through waterways.",
+};
+
+const DEMO_ACTION: Record<Scenario, string> = {
+  safe: "No evacuation necessary. Monitor local channels",
+  moderate: "Prepare go-bag. Move valuables higher. Avoid riverbanks",
+  evacuate: "Move your community to higher ground immediately",
+};
+
 function pad2(n: number) {
   return String(Math.max(0, Math.floor(n))).padStart(2, "0");
 }
 
 async function copyTextToClipboard(text: string) {
-  // Prefer async Clipboard API when available.
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
     return;
   }
-
-  // Fallback for older browsers: temporarily inject a textarea.
   if (typeof document === "undefined") return;
   const el = document.createElement("textarea");
   el.value = text;
@@ -63,7 +71,6 @@ function ListenBulletinButton(props: {
   onListen: () => void;
 }) {
   const { isSpeakingBulletin, onListen } = props;
-
   return (
     <button
       type="button"
@@ -96,18 +103,31 @@ function ListenBulletinButton(props: {
 export default function Home() {
   const [scenario, setScenario] = useState<Scenario>("safe");
   const [isSpeakingBulletin, setIsSpeakingBulletin] = useState(false);
-  const [shareCopiedVisible, setShareCopiedVisible] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [locationErrorVisible, setLocationErrorVisible] = useState(false);
-  /** Countdown duration in ms; null until client mount (avoids hydration mismatch). */
   const [landfallEtaMs, setLandfallEtaMs] = useState<number | null>(null);
 
+  // Phase 7 state
+  const [isLoadingBulletin, setIsLoadingBulletin] = useState(false);
+  const [progressMessage, setProgressMessage] = useState("");
+  const [liveBulletin, setLiveBulletin] = useState<Bulletin | null>(null);
+  const [activeLanguage, setActiveLanguage] = useState<Language>("ENGLISH");
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<Record<string, string>>({});
+  const [suggestions, setSuggestions] = useState<BarangayLocation[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Demo countdown — initialized client-side to avoid hydration mismatch
   useEffect(() => {
-    // Demo: 6h countdown, initialized only on the client after mount.
     setLandfallEtaMs(6 * 60 * 60 * 1000);
   }, []);
 
+  // Cleanup speech on unmount
   useEffect(() => {
     return () => {
       if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -116,18 +136,7 @@ export default function Home() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!shareCopiedVisible) return;
-    const id = window.setTimeout(() => setShareCopiedVisible(false), 2000);
-    return () => window.clearTimeout(id);
-  }, [shareCopiedVisible]);
-
-  useEffect(() => {
-    if (!locationErrorVisible) return;
-    const id = window.setTimeout(() => setLocationErrorVisible(false), 2000);
-    return () => window.clearTimeout(id);
-  }, [locationErrorVisible]);
-
+  // Cancel speech when scenario changes
   useEffect(() => {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -135,136 +144,15 @@ export default function Home() {
     setIsSpeakingBulletin(false);
   }, [scenario]);
 
-  const handleListenBulletin = useCallback(() => {
-    if (typeof window === "undefined") return;
+  // Dismiss location error after 3s
+  useEffect(() => {
+    if (!locationErrorVisible) return;
+    const id = window.setTimeout(() => setLocationErrorVisible(false), 3000);
+    return () => window.clearTimeout(id);
+  }, [locationErrorVisible]);
 
-    const synth = window.speechSynthesis;
-    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return;
-
-    synth.cancel();
-    setIsSpeakingBulletin(true);
-
-    const utterance = new SpeechSynthesisUtterance(
-      RECOMMENDED_ACTION_VOICE[scenario]
-    );
-    utterance.lang = "en-US";
-
-    const text = RECOMMENDED_ACTION_VOICE[scenario];
-    const fallbackMs = Math.min(60_000, text.length * 80 + 2000);
-    let finished = false;
-    const cleanup = window.setTimeout(() => {
-      if (finished) return;
-      finished = true;
-      setIsSpeakingBulletin(false);
-    }, fallbackMs);
-
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      window.clearTimeout(cleanup);
-      setIsSpeakingBulletin(false);
-    };
-
-    utterance.onend = finish;
-    utterance.onerror = finish;
-
-    synth.speak(utterance);
-  }, [scenario]);
-
-  const bulletinShareText = useMemo(() => {
-    return `Risk level: ${RISK_LEVEL_LABEL[scenario]}\nRecommended action: ${RECOMMENDED_ACTION_VOICE[scenario]}`;
-  }, [scenario]);
-
-  const handleShareBulletin = useCallback(async () => {
-    if (typeof window === "undefined") return;
-
-    const url = window.location.href;
-    const title = "Kairago — Risk Bulletin";
-    const text = bulletinShareText;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, text, url });
-        return;
-      }
-    } catch {
-      // If user cancels share or the share fails, we still fall back to clipboard.
-    }
-
-    try {
-      await copyTextToClipboard(`${title}\n\n${text}\n\n${url}`);
-      setShareCopiedVisible(true);
-    } catch {
-      // Ignore: no supported copy path.
-    }
-  }, [bulletinShareText]);
-
-  const handleUseMyLocation = useCallback(() => {
-    if (typeof window === "undefined") return;
-    if (!navigator.geolocation) {
-      setLocationErrorVisible(true);
-      return;
-    }
-
-    setIsLocating(true);
-    setLocationErrorVisible(false);
-
-    const seeded = [
-      { name: "Barangay Pag-asa", lat: 14.6507, lon: 121.0794 },
-      { name: "Barangay San Roque Marikina", lat: 14.6507, lon: 121.1 },
-      { name: "Barangay Poblacion Leyte", lat: 11.2442, lon: 124.9996 },
-    ] as const;
-    type SeededBarangayName = (typeof seeded)[number]["name"];
-
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const distanceKm = (
-      lat1: number,
-      lon1: number,
-      lat2: number,
-      lon2: number
-    ) => {
-      // Simple Haversine distance (good enough for proximity matching).
-      const R = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) *
-          Math.cos(toRad(lat2)) *
-          Math.sin(dLon / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(a));
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        let nearestName: SeededBarangayName = seeded[0].name;
-        let nearestDistanceKm = Number.POSITIVE_INFINITY;
-        for (const cur of seeded) {
-          const d = distanceKm(latitude, longitude, cur.lat, cur.lon);
-          if (d < nearestDistanceKm) {
-            nearestDistanceKm = d;
-            nearestName = cur.name;
-          }
-        }
-
-        setSearchQuery(nearestName);
-        setIsLocating(false);
-      },
-      (err) => {
-        setIsLocating(false);
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationErrorVisible(true);
-        } else {
-          setLocationErrorVisible(true);
-        }
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 }
-    );
-  }, []);
-
+  // Countdown timer for evacuate scenario
   const landfallReady = landfallEtaMs !== null;
-
   useEffect(() => {
     if (scenario !== "evacuate" || !landfallReady) return;
     const id = window.setInterval(() => {
@@ -275,18 +163,346 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, [scenario, landfallReady]);
 
+  // Auto-select scenario tab when live bulletin arrives
+  useEffect(() => {
+    if (!liveBulletin) return;
+    const map: Record<string, Scenario> = {
+      SAFE: "safe",
+      "MODERATE RISK": "moderate",
+      "EVACUATE NOW": "evacuate",
+    };
+    const mapped = map[liveBulletin.risk_level];
+    if (mapped) setScenario(mapped);
+  }, [liveBulletin]);
+
+  // Poll API health every 60 seconds
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch("/api/health");
+        const data = await res.json();
+        setHealthStatus({
+          nasa_power: data.sources?.nasa_power?.status ?? "red",
+          noaa: data.sources?.noaa?.status ?? "red",
+        });
+      } catch {
+        setHealthStatus({ nasa_power: "red", noaa: "red" });
+      }
+    };
+    fetchHealth();
+    const id = window.setInterval(fetchHealth, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Autocomplete suggestions
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    const results = searchBarangays(searchQuery);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0);
+  }, [searchQuery]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // ── Health dot color helper ──────────────────────────────────────────────
+  const healthDotClass = (key: string) => {
+    const status = healthStatus[key];
+    if (status === "yellow") return "bg-[var(--golden-yellow)]";
+    if (status === "red") return "bg-[var(--terracotta)]";
+    return "bg-[var(--leaf-green)]";
+  };
+
+  // ── Agent pipeline ───────────────────────────────────────────────────────
+  const runAgentPipeline = useCallback(
+    async (name: string, coords?: { lat: number; lng: number }) => {
+      setIsLoadingBulletin(true);
+      setProgressMessage("Starting…");
+      setLiveBulletin(null);
+      setTranslatedText(null);
+      setActiveLanguage("ENGLISH");
+
+      try {
+        const res = await fetch("/api/agent/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ barangay_name: name, coordinates: coords }),
+        });
+
+        if (!res.body) throw new Error("No response body");
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const chunks = buffer.split("\n\n");
+          buffer = chunks.pop() ?? "";
+          for (const chunk of chunks) {
+            if (!chunk.startsWith("data: ")) continue;
+            try {
+              const event = JSON.parse(chunk.slice(6));
+              if (event.type === "progress") {
+                setProgressMessage(event.message);
+              } else if (event.type === "bulletin") {
+                setLiveBulletin(event.data);
+              }
+            } catch {
+              // ignore malformed chunks
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Agent stream error:", err);
+      } finally {
+        setIsLoadingBulletin(false);
+      }
+    },
+    []
+  );
+
+  // ── Search ───────────────────────────────────────────────────────────────
+  const handleSearch = useCallback(
+    (name: string, coords?: { lat: number; lng: number }) => {
+      if (!name.trim()) return;
+      setShowSuggestions(false);
+      runAgentPipeline(name, coords);
+    },
+    [runAgentPipeline]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && searchQuery.trim()) {
+        handleSearch(searchQuery);
+      }
+      if (e.key === "Escape") setShowSuggestions(false);
+    },
+    [searchQuery, handleSearch]
+  );
+
+  // ── Geolocation ──────────────────────────────────────────────────────────
+  const handleUseMyLocation = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (!navigator.geolocation) {
+      setLocationErrorVisible(true);
+      return;
+    }
+    setIsLocating(true);
+    setLocationErrorVisible(false);
+
+    const seeded = [
+      { name: "Barangay Pag-asa", lat: 14.6507, lon: 121.0794 },
+      { name: "Barangay San Roque Marikina", lat: 14.6507, lon: 121.1 },
+      { name: "Barangay Poblacion Leyte", lat: 11.2442, lon: 124.9996 },
+    ] as const;
+
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const distKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        let nearestName: string = seeded[0].name;
+        let nearestDist = Infinity;
+        for (const cur of seeded) {
+          const d = distKm(latitude, longitude, cur.lat, cur.lon);
+          if (d < nearestDist) {
+            nearestDist = d;
+            nearestName = cur.name;
+          }
+        }
+        setSearchQuery(nearestName);
+        setIsLocating(false);
+        runAgentPipeline(nearestName, { lat: latitude, lng: longitude });
+      },
+      () => {
+        setIsLocating(false);
+        setLocationErrorVisible(true);
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 }
+    );
+  }, [runAgentPipeline]);
+
+  // ── Language translation ─────────────────────────────────────────────────
+  const handleLanguageChange = useCallback(
+    async (lang: Language) => {
+      if (lang === activeLanguage) return;
+      setActiveLanguage(lang);
+
+      if (lang === "ENGLISH") {
+        setTranslatedText(null);
+        return;
+      }
+      if (!liveBulletin) return;
+
+      setIsTranslating(true);
+      try {
+        const res = await fetch("/api/bulletin/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: liveBulletin.bulletin_text,
+            target_language: lang === "FILIPINO" ? "Filipino" : "Cebuano",
+          }),
+        });
+        const data = await res.json();
+        if (data.translated_text) setTranslatedText(data.translated_text);
+      } catch {
+        setTranslatedText(null);
+      } finally {
+        setIsTranslating(false);
+      }
+    },
+    [activeLanguage, liveBulletin]
+  );
+
+  // ── Derived display values ───────────────────────────────────────────────
+  const currentBulletinText = useMemo(() => {
+    if (!liveBulletin) return DEMO_TEXT[scenario];
+    if (activeLanguage !== "ENGLISH" && translatedText) return translatedText;
+    return liveBulletin.bulletin_text;
+  }, [liveBulletin, scenario, activeLanguage, translatedText]);
+
+  const currentAction = useMemo(() => {
+    if (!liveBulletin) return DEMO_ACTION[scenario];
+    return liveBulletin.recommended_action;
+  }, [liveBulletin, scenario]);
+
+  const confidenceLabel = useMemo(() => {
+    if (!liveBulletin) return "Data Confidence High";
+    return `${liveBulletin.confidence} Confidence`;
+  }, [liveBulletin]);
+
+  const showLiveSafe =
+    liveBulletin?.risk_level === "SAFE" && scenario === "safe";
+  const showLiveModerate =
+    liveBulletin?.risk_level === "MODERATE RISK" && scenario === "moderate";
+  const showLiveEvacuate =
+    liveBulletin?.risk_level === "EVACUATE NOW" && scenario === "evacuate";
+
+  // ── Speech synthesis ─────────────────────────────────────────────────────
+  const handleListenBulletin = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const synth = window.speechSynthesis;
+    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return;
+    synth.cancel();
+    setIsSpeakingBulletin(true);
+    const text = currentAction;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    const fallbackMs = Math.min(60_000, text.length * 80 + 2000);
+    let finished = false;
+    const cleanup = window.setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      setIsSpeakingBulletin(false);
+    }, fallbackMs);
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(cleanup);
+      setIsSpeakingBulletin(false);
+    };
+    utterance.onend = finish;
+    utterance.onerror = finish;
+    synth.speak(utterance);
+  }, [currentAction]);
+
+  // ── Share / copy ─────────────────────────────────────────────────────────
+  const bulletinShareText = useMemo(() => {
+    const level = liveBulletin
+      ? liveBulletin.risk_level
+      : RISK_LEVEL_LABEL[scenario];
+    return `Risk level: ${level}\nRecommended action: ${currentAction}`;
+  }, [liveBulletin, scenario, currentAction]);
+
+  const handleShareBulletin = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
+    const title = "Kairago — Risk Bulletin";
+    const text = bulletinShareText;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+        return;
+      }
+    } catch {
+      // fall through to clipboard
+    }
+    try {
+      await copyTextToClipboard(`${title}\n\n${text}\n\n${url}`);
+      setToastVisible(true);
+    } catch {
+      // no supported copy path
+    }
+  }, [bulletinShareText]);
+
   const landfallClock = useMemo(() => {
     if (landfallEtaMs === null) return "--:--:--";
-    const totalSeconds = Math.floor(landfallEtaMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+    const total = Math.floor(landfallEtaMs / 1000);
+    return `${pad2(Math.floor(total / 3600))}:${pad2(Math.floor((total % 3600) / 60))}:${pad2(total % 60)}`;
   }, [landfallEtaMs]);
+
+  // ── Shared bulletin card action row ─────────────────────────────────────
+  const ActionRow = () => (
+    <div className="flex items-center justify-between pt-4">
+      <ListenBulletinButton
+        isSpeakingBulletin={isSpeakingBulletin}
+        onListen={handleListenBulletin}
+      />
+      <div className="flex gap-4">
+        <button
+          type="button"
+          suppressHydrationWarning
+          onClick={handleShareBulletin}
+          aria-label="Share bulletin"
+          className="text-[var(--text-muted)] transition-colors hover:text-white"
+        >
+          <Share2 className="h-5 w-5" aria-hidden />
+        </button>
+        <Download className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
+        <Bookmark className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {/* Top AppBar Shell */}
+      <Toast
+        message="Copied to clipboard"
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
+      />
+
+      {/* Top AppBar */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[var(--surface)]">
         <div className="mx-auto flex h-14 w-full max-w-[640px] items-center justify-between px-4">
           <div className="flex items-center gap-2">
@@ -308,9 +524,19 @@ export default function Home() {
         {/* API Health Row */}
         <div className="hide-scrollbar flex items-center justify-between overflow-x-auto border-b border-white/5 py-3">
           <div className="flex shrink-0 items-center gap-4">
-            {["PAGASA", "NOAA", "PHIVOLCS", "System Ok"].map((label) => (
+            {[
+              { label: "PAGASA", key: "nasa_power" },
+              { label: "NOAA", key: "noaa" },
+              { label: "PHIVOLCS", key: "nasa_power" },
+              { label: "System Ok", key: "nasa_power" },
+            ].map(({ label, key }) => (
               <div key={label} className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--leaf-green)]" />
+                <div
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    healthDotClass(key)
+                  )}
+                />
                 <span className="text-[9px] font-bold text-[var(--text-muted)]">
                   {label}
                 </span>
@@ -321,27 +547,27 @@ export default function Home() {
 
         {/* Language Selector */}
         <div className="mt-4 flex border-b border-white/5">
-          <button
-            type="button"
-            suppressHydrationWarning
-            className="border-b-2 border-[var(--leaf-green)] px-4 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--leaf-green)]"
-          >
-            ENGLISH
-          </button>
-          <button
-            type="button"
-            suppressHydrationWarning
-            className="px-4 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]"
-          >
-            FILIPINO
-          </button>
-          <button
-            type="button"
-            suppressHydrationWarning
-            className="px-4 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]"
-          >
-            CEBUANO
-          </button>
+          {(["ENGLISH", "FILIPINO", "CEBUANO"] as Language[]).map((lang) => (
+            <button
+              key={lang}
+              type="button"
+              suppressHydrationWarning
+              disabled={isTranslating}
+              onClick={() => handleLanguageChange(lang)}
+              className={cn(
+                "px-4 py-3 text-[11px] font-medium tracking-[0.1em] transition-colors disabled:opacity-50",
+                activeLanguage === lang
+                  ? "border-b-2 border-[var(--leaf-green)] text-[var(--leaf-green)]"
+                  : "text-[var(--text-muted)]"
+              )}
+            >
+              {isTranslating && lang !== "ENGLISH" && lang !== activeLanguage ? (
+                <Loader2 className="inline h-3 w-3 animate-spin" />
+              ) : (
+                lang
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Search Section */}
@@ -349,14 +575,44 @@ export default function Home() {
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search for your barangay"
               suppressHydrationWarning
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               className="h-11 w-full rounded-lg border border-white/12 bg-[var(--surface-raised)] pl-10 pr-4 text-[15px] italic text-[var(--text-muted)] focus:border-[color:var(--leaf-green)]/50 focus:outline-none"
             />
+            {/* Autocomplete Dropdown */}
+            {showSuggestions && (
+              <div
+                ref={suggestionsRef}
+                className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-lg border border-white/12 bg-[var(--surface-raised)] shadow-xl"
+              >
+                {suggestions.map((s) => (
+                  <button
+                    key={s.name}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearchQuery(s.name);
+                      handleSearch(s.name, {
+                        lat: s.latitude,
+                        lng: s.longitude,
+                      });
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-[14px] text-[var(--on-surface)] transition-colors hover:bg-white/5"
+                  >
+                    <MapPin className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
           <div className="space-y-1">
             <button
               type="button"
@@ -439,232 +695,167 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Risk Bulletin Card */}
-        {scenario === "safe" && (
+        {/* ── Bulletin Card Area ── */}
+
+        {isLoadingBulletin ? (
+          /* Loading state */
           <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
-            <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-10" />
+            <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-5" />
             <div className="relative space-y-4 p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                    STATUS
-                  </span>
-                  <h2 className="text-[48px] font-extrabold leading-[1.1] text-white">
-                    SAFE
-                  </h2>
-                </div>
-                <div className="rounded-full border border-[var(--leaf-green)] bg-[color:var(--leaf-green)]/20 px-2 py-1">
-                  <span className="text-[11px] font-medium uppercase text-[var(--leaf-green)]">
-                    Data Confidence High
-                  </span>
-                </div>
-              </div>
-              <hr className="border-white/10" />
-              <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
-                Current atmospheric conditions indicate no immediate threat of
-                flooding or severe weather in your area. Satellite data shows
-                clear skies with minimal cloud formation. Local sensors report
-                stable water levels across all primary monitoring stations.
-              </p>
-              <div className="space-y-2 pt-2">
-                <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                  RECOMMENDED ACTION
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--leaf-green)]" />
+                <span className="text-[15px] font-normal text-[var(--text-body)]">
+                  {progressMessage}
                 </span>
-                <div className="flex items-center justify-between">
-                  <p className="text-[17px] font-bold text-white">
-                    No evacuation necessary. Monitor local channels
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-1/2 animate-pulse rounded-full bg-[var(--leaf-green)] opacity-60" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ── SAFE card ── */}
+            {scenario === "safe" && (
+              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
+                <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-10" />
+                <div className="relative space-y-4 p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                        STATUS
+                      </span>
+                      <h2 className="text-[48px] font-extrabold leading-[1.1] text-white">
+                        SAFE
+                      </h2>
+                    </div>
+                    <div className="rounded-full border border-[var(--leaf-green)] bg-[color:var(--leaf-green)]/20 px-2 py-1">
+                      <span className="text-[11px] font-medium uppercase text-[var(--leaf-green)]">
+                        {showLiveSafe ? confidenceLabel : "Data Confidence High"}
+                      </span>
+                    </div>
+                  </div>
+                  <hr className="border-white/10" />
+                  <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
+                    {showLiveSafe ? currentBulletinText : DEMO_TEXT.safe}
                   </p>
-                  <ArrowRight className="h-5 w-5 text-white" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between pt-4">
-                <ListenBulletinButton
-                  isSpeakingBulletin={isSpeakingBulletin}
-                  onListen={handleListenBulletin}
-                />
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <button
-                      type="button"
-                      suppressHydrationWarning
-                      onClick={handleShareBulletin}
-                      aria-label="Share bulletin"
-                      className="text-[var(--text-muted)] transition-colors hover:text-white"
-                    >
-                      <Share2 className="h-5 w-5" aria-hidden />
-                    </button>
-                    <span
-                      className={cn(
-                        "mt-1 text-[11px] text-[var(--text-muted)] transition-opacity",
-                        shareCopiedVisible ? "opacity-100" : "opacity-0"
-                      )}
-                      aria-live="polite"
-                    >
-                      Copied to clipboard
+                  <div className="space-y-2 pt-2">
+                    <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      RECOMMENDED ACTION
                     </span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[17px] font-bold text-white">
+                        {showLiveSafe ? currentAction : DEMO_ACTION.safe}
+                      </p>
+                      <ArrowRight className="h-5 w-5 text-white" />
+                    </div>
                   </div>
-                  <Download className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
-                  <Bookmark className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
+                  <ActionRow />
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {scenario === "moderate" && (
-          <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--golden-yellow)] bg-[var(--surface)]">
-            <div className="pointer-events-none absolute inset-0 bg-[var(--golden-yellow)] opacity-10" />
-            <div className="relative space-y-4 p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                    STATUS
-                  </span>
-                  <h2 className="text-[48px] font-extrabold leading-[1.1] text-[var(--golden-yellow)]">
-                    MODERATE RISK
-                  </h2>
-                </div>
-                <div className="rounded-full border border-[var(--golden-yellow)] bg-[color:var(--golden-yellow)]/20 px-2 py-1">
-                  <span className="text-[11px] font-medium uppercase text-[var(--golden-yellow)]">
-                    Advisory Active
-                  </span>
-                </div>
-              </div>
-              <hr className="border-white/10" />
-              <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
-                A sustained band of heavy rainfall is tracking toward your
-                watershed. Runoff is expected to increase rapidly, with a high
-                likelihood of street-level flooding in low-lying zones and
-                near-channel communities within the next 6–12 hours.
-              </p>
-              <div className="space-y-2 pt-2">
-                <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                  RECOMMENDED ACTION
-                </span>
-                <div className="flex items-center justify-between">
-                  <p className="text-[17px] font-bold text-white">
-                    Prepare go-bag. Move valuables higher. Avoid riverbanks
+            {/* ── MODERATE RISK card ── */}
+            {scenario === "moderate" && (
+              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--golden-yellow)] bg-[var(--surface)]">
+                <div className="pointer-events-none absolute inset-0 bg-[var(--golden-yellow)] opacity-10" />
+                <div className="relative space-y-4 p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                        STATUS
+                      </span>
+                      <h2 className="text-[48px] font-extrabold leading-[1.1] text-[var(--golden-yellow)]">
+                        MODERATE RISK
+                      </h2>
+                    </div>
+                    <div className="rounded-full border border-[var(--golden-yellow)] bg-[color:var(--golden-yellow)]/20 px-2 py-1">
+                      <span className="text-[11px] font-medium uppercase text-[var(--golden-yellow)]">
+                        {showLiveModerate ? confidenceLabel : "Advisory Active"}
+                      </span>
+                    </div>
+                  </div>
+                  <hr className="border-white/10" />
+                  <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
+                    {showLiveModerate ? currentBulletinText : DEMO_TEXT.moderate}
                   </p>
-                  <ArrowRight className="h-5 w-5 text-white" />
+                  <div className="space-y-2 pt-2">
+                    <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      RECOMMENDED ACTION
+                    </span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[17px] font-bold text-white">
+                        {showLiveModerate ? currentAction : DEMO_ACTION.moderate}
+                      </p>
+                      <ArrowRight className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <ActionRow />
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-4">
-                <ListenBulletinButton
-                  isSpeakingBulletin={isSpeakingBulletin}
-                  onListen={handleListenBulletin}
-                />
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
+            )}
+
+            {/* ── EVACUATE NOW card ── */}
+            {scenario === "evacuate" && (
+              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--terracotta)] bg-[var(--surface)]">
+                <div className="pointer-events-none absolute inset-0 bg-[var(--terracotta)] opacity-10" />
+                <div className="relative space-y-4 p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                        STATUS
+                      </span>
+                      <h2 className="text-[48px] font-extrabold leading-[1.1] text-[var(--terracotta)]">
+                        EVACUATE NOW
+                      </h2>
+                      <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/15 px-3 py-1">
+                        <AlertTriangle className="h-4 w-4 text-[var(--terracotta)]" />
+                        <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--terracotta)]">
+                          LANDFALL IN
+                        </span>
+                        <span
+                          className="text-[13px] font-bold text-white tabular-nums"
+                          suppressHydrationWarning
+                        >
+                          {landfallReady ? landfallClock : "--:--:--"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-full border border-[var(--terracotta)] bg-[color:var(--terracotta)]/20 px-2 py-1">
+                      <span className="text-[11px] font-medium uppercase text-[var(--terracotta)]">
+                        {showLiveEvacuate ? confidenceLabel : "Emergency Bulletin"}
+                      </span>
+                    </div>
+                  </div>
+                  <hr className="border-white/10" />
+                  <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
+                    {showLiveEvacuate ? currentBulletinText : DEMO_TEXT.evacuate}
+                  </p>
+                  <div className="flex items-center justify-between gap-4 pt-2">
                     <button
                       type="button"
                       suppressHydrationWarning
-                      onClick={handleShareBulletin}
-                      aria-label="Share bulletin"
-                      className="text-[var(--text-muted)] transition-colors hover:text-white"
+                      className="h-11 w-full rounded-lg border border-[color:var(--terracotta)]/50 bg-[color:var(--terracotta)]/20 px-4 text-[13px] font-bold tracking-[0.06em] text-white transition-transform active:scale-95"
                     >
-                      <Share2 className="h-5 w-5" aria-hidden />
+                      VIEW SHELTERS
                     </button>
-                    <span
-                      className={cn(
-                        "mt-1 text-[11px] text-[var(--text-muted)] transition-opacity",
-                        shareCopiedVisible ? "opacity-100" : "opacity-0"
-                      )}
-                      aria-live="polite"
-                    >
-                      Copied to clipboard
-                    </span>
                   </div>
-                  <Download className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
-                  <Bookmark className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {scenario === "evacuate" && (
-          <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--terracotta)] bg-[var(--surface)]">
-            <div className="pointer-events-none absolute inset-0 bg-[var(--terracotta)] opacity-10" />
-            <div className="relative space-y-4 p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                    STATUS
-                  </span>
-                  <h2 className="text-[48px] font-extrabold leading-[1.1] text-[var(--terracotta)]">
-                    EVACUATE NOW
-                  </h2>
-
-                  <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/15 px-3 py-1">
-                    <AlertTriangle className="h-4 w-4 text-[var(--terracotta)]" />
-                    <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--terracotta)]">
-                      LANDFALL IN
+                  <div className="space-y-2 pt-2">
+                    <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      RECOMMENDED ACTION
                     </span>
-                    <span
-                      className="text-[13px] font-bold text-white tabular-nums"
-                      suppressHydrationWarning
-                    >
-                      {landfallReady ? landfallClock : "--:--:--"}
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[17px] font-bold text-white">
+                        {showLiveEvacuate ? currentAction : DEMO_ACTION.evacuate}
+                      </p>
+                      <ArrowRight className="h-5 w-5 text-white" />
+                    </div>
                   </div>
-                </div>
-                <div className="rounded-full border border-[var(--terracotta)] bg-[color:var(--terracotta)]/20 px-2 py-1">
-                  <span className="text-[11px] font-medium uppercase text-[var(--terracotta)]">
-                    Emergency Bulletin
-                  </span>
+                  <ActionRow />
                 </div>
               </div>
-              <hr className="border-white/10" />
-              <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
-                Typhoon landfall is imminent. Forecast models indicate
-                destructive winds and rapid surge in rainfall intensity. If you
-                are within flood-prone areas, coastal zones, or near steep
-                slopes, evacuate immediately to designated shelters and avoid
-                travel through waterways.
-              </p>
-
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <button
-                  type="button"
-                  suppressHydrationWarning
-                  className="h-11 w-full rounded-lg border border-[color:var(--terracotta)]/50 bg-[color:var(--terracotta)]/20 px-4 text-[13px] font-bold tracking-[0.06em] text-white transition-transform active:scale-95"
-                >
-                  VIEW SHELTERS
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <ListenBulletinButton
-                  isSpeakingBulletin={isSpeakingBulletin}
-                  onListen={handleListenBulletin}
-                />
-                <div className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <button
-                      type="button"
-                      suppressHydrationWarning
-                      onClick={handleShareBulletin}
-                      aria-label="Share bulletin"
-                      className="text-[var(--text-muted)] transition-colors hover:text-white"
-                    >
-                      <Share2 className="h-5 w-5" aria-hidden />
-                    </button>
-                    <span
-                      className={cn(
-                        "mt-1 text-[11px] text-[var(--text-muted)] transition-opacity",
-                        shareCopiedVisible ? "opacity-100" : "opacity-0"
-                      )}
-                      aria-live="polite"
-                    >
-                      Copied to clipboard
-                    </span>
-                  </div>
-                  <Download className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
-                  <Bookmark className="h-5 w-5 cursor-pointer text-[var(--text-muted)] hover:text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
 
         {/* 72-HR RISK FORECAST */}
@@ -710,7 +901,7 @@ export default function Home() {
           {["PAGASA", "NASA POWER", "NOAA", "PHIVOLCS"].map((src) => (
             <div
               key={src}
-              className="rounded bg-white/5 border border-white/10 px-2 py-1"
+              className="rounded border border-white/10 bg-white/5 px-2 py-1"
             >
               <span className="text-[9px] font-bold text-[var(--text-muted)]">
                 {src}

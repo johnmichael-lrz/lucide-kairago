@@ -3,13 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) throw new Error('Supabase env vars missing')
+  if (!url || !key) {
+    // Build-time fallback: module loads cleanly; requests fail at runtime when called
+    return createClient('https://placeholder.supabase.co', 'placeholder-key', {
+      auth: { persistSession: false },
+    })
+  }
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
 export const supabaseAdmin = getServiceClient()
 
-// DDL for all five RAG tables — executed via exec_sql RPC
+// DDL for all RAG tables + bulletin history — executed via exec_ddl RPC or dashboard SQL editor
 export const RAG_TABLES_SQL = `
 create extension if not exists vector;
 
@@ -64,6 +69,16 @@ create table if not exists scientific_literature (
   content text not null,
   source text,
   embedding vector(1024)
+);
+
+create table if not exists bulletin_history (
+  id uuid primary key default gen_random_uuid(),
+  barangay_name text not null,
+  risk_level text not null,
+  bulletin_text text,
+  recommended_action text,
+  confidence text,
+  timestamp timestamp with time zone default now()
 );
 
 -- pgvector similarity search functions
