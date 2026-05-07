@@ -351,6 +351,7 @@ export default function Home() {
             <input
               type="text"
               placeholder="Search for your barangay"
+              suppressHydrationWarning
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-11 w-full rounded-lg border border-white/12 bg-[var(--surface-raised)] pl-10 pr-4 text-[15px] italic text-[var(--text-muted)] focus:border-[color:var(--leaf-green)]/50 focus:outline-none"

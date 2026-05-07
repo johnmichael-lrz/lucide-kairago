@@ -1,0 +1,17 @@
+{
+  "name": "Kairago",
+  "short_name": "Kairago",
+  "description": "Hyperlocal climate risk intelligence for Philippine barangays",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a0f08",
+  "theme_color": "#1a0f08",
+  "icons": [
+    {
+      "src": "/file.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -27,7 +27,6 @@ export default function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1"
         />
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1a0f08" />
       </head>
       <body
