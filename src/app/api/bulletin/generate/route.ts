@@ -4,6 +4,7 @@ import { Langfuse } from 'langfuse'
 import { z } from 'zod'
 import { createOpenRouterClient, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/openrouter'
 import { bulletinSchema, BULLETIN_SYSTEM_PROMPT, type Bulletin } from '@/lib/bulletin-schema'
+import { retrieveRAGContext, formatRAGContextForPrompt } from '@/lib/rag/retriever'
 
 const requestSchema = z.object({
   barangay: z.string(),
@@ -21,10 +22,7 @@ function getLangfuse() {
   })
 }
 
-async function callModel(
-  modelId: string,
-  prompt: string,
-): Promise<Bulletin> {
+async function callModel(modelId: string, prompt: string): Promise<Bulletin> {
   const openrouter = createOpenRouterClient()
   const result = await generateObject({
     model: openrouter(modelId),
@@ -67,7 +65,6 @@ async function generateWithRetry(
     }
   }
 
-  // Fallback to DeepSeek
   const fallbackGeneration = langfuse.generation({
     traceId,
     name: 'bulletin-generation-fallback',
@@ -114,20 +111,37 @@ export async function POST(req: NextRequest) {
     metadata: { barangay, location },
   })
 
-  const prompt = `Generate a 72-hour risk bulletin for ${barangay}${
-    location ? ` (lat: ${location.lat}, lng: ${location.lng})` : ''
-  } based on this environmental data:\n\n${JSON.stringify(environmental_data, null, 2)}`
+  // Summarise environmental data for RAG query
+  const conditionsSummary = Object.entries(environmental_data)
+    .slice(0, 6)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(', ')
+
+  // Retrieve RAG context — geographic profile, historical records, NDRRMC protocols
+  let ragContextBlock = ''
+  try {
+    const ragContext = await retrieveRAGContext(barangay, conditionsSummary)
+    ragContextBlock = formatRAGContextForPrompt(ragContext)
+  } catch (err) {
+    // RAG failure is non-fatal — generate bulletin without context
+    console.warn('RAG retrieval failed, generating without context:', err)
+    trace.update({ metadata: { rag_skipped: true, rag_error: String(err) } })
+  }
+
+  const prompt = ragContextBlock
+    ? `Generate a 72-hour risk bulletin for ${barangay}${
+        location ? ` (lat: ${location.lat}, lng: ${location.lng})` : ''
+      } based on this environmental data:\n\n${JSON.stringify(environmental_data, null, 2)}\n\n${ragContextBlock}`
+    : `Generate a 72-hour risk bulletin for ${barangay}${
+        location ? ` (lat: ${location.lat}, lng: ${location.lng})` : ''
+      } based on this environmental data:\n\n${JSON.stringify(environmental_data, null, 2)}`
 
   try {
-    const { bulletin, model, attempts } = await generateWithRetry(
-      prompt,
-      langfuse,
-      trace.id,
-    )
+    const { bulletin, model, attempts } = await generateWithRetry(prompt, langfuse, trace.id)
 
     trace.update({
       output: bulletin,
-      metadata: { model_used: model, attempts },
+      metadata: { model_used: model, attempts, rag_context_used: ragContextBlock.length > 0 },
     })
 
     await langfuse.flushAsync()
