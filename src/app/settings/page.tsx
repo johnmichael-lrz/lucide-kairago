@@ -1,29 +1,101 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { ChevronRight, MoreVertical, Pin, Plus } from "lucide-react";
+import { Header } from "@/components/Header";
 import {
-  Activity,
-  UserCircle,
-  Plus,
-  Pin,
-  GripVertical,
-  ChevronRight,
-} from "lucide-react";
+  DEFAULT_SETTINGS,
+  readKairagoBarangays,
+  readKairagoSettings,
+  writeKairagoBarangays,
+  writeKairagoSettings,
+  type KairagoBarangays,
+  type KairagoSettings,
+} from "@/lib/kairago-storage";
+import { cn } from "@/lib/utils";
+import { useLanguage, type AppLanguage } from "@/context/LanguageContext";
 
 export default function SettingsPage() {
+  const [settings, setSettings] = useState<KairagoSettings>(DEFAULT_SETTINGS);
+  const { language, setLanguage } = useLanguage();
+  const [barangays, setBarangays] = useState<KairagoBarangays>({
+    items: [],
+  });
+  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSettings(readKairagoSettings());
+    setBarangays(readKairagoBarangays());
+  }, []);
+
+  useEffect(() => {
+    const onBarangaysUpdate = (e: Event) => {
+      const ce = e as CustomEvent;
+      if (ce.detail) setBarangays(ce.detail as KairagoBarangays);
+      else setBarangays(readKairagoBarangays());
+    };
+    const onStorage = () => setBarangays(readKairagoBarangays());
+    window.addEventListener("kairago-barangays-updated", onBarangaysUpdate);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("kairago-barangays-updated", onBarangaysUpdate);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  const saveSettings = (next: KairagoSettings) => {
+    setSettings(next);
+    writeKairagoSettings(next);
+  };
+
+  const Toggle = (props: {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    ariaLabel: string;
+  }) => {
+    return (
+      <label className="relative inline-flex cursor-pointer items-center">
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          checked={props.checked}
+          onChange={(e) => props.onChange(e.target.checked)}
+          aria-label={props.ariaLabel}
+        />
+        <span className="h-6 w-11 rounded-full bg-gray-600 transition-colors peer-checked:bg-[#4ADE80]" />
+        <span className="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+      </label>
+    );
+  };
+
+  const defaultLabel = useMemo(() => {
+    if (!barangays.default) return null;
+    return barangays.default;
+  }, [barangays.default]);
+
+  const setDefault = (name: string) => {
+    const next = { ...barangays, default: name };
+    setBarangays(next);
+    writeKairagoBarangays(next);
+    setOpenMenuFor(null);
+  };
+
+  const removeBarangay = (name: string) => {
+    const nextItems = barangays.items.filter((b) => b !== name);
+    const next: KairagoBarangays = {
+      items: nextItems.length > 0 ? nextItems : [],
+      default: barangays.default === name ? undefined : barangays.default,
+    };
+    setBarangays(next);
+    writeKairagoBarangays(next);
+    setOpenMenuFor(null);
+  };
+
   return (
     <>
-      {/* Top App Bar */}
-      <header className="fixed left-1/2 top-0 z-[60] flex h-14 w-full max-w-screen-sm -translate-x-1/2 items-center justify-between border-b border-white/10 bg-[var(--surface)] px-4">
-        <div className="flex items-center gap-3">
-          <Activity className="h-5 w-5 text-[var(--primary)]" />
-          <span className="tracking-tight text-[24px] font-bold text-[var(--on-surface)]">
-            Kairago
-          </span>
-        </div>
-        <button className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-[var(--surface-bright)] active:scale-95">
-          <UserCircle className="h-6 w-6 text-[var(--primary)]" />
-        </button>
-      </header>
+      <Header />
 
-      <main className="mx-auto w-full max-w-[640px] space-y-6 px-4 pb-24 pt-20 antialiased selection:bg-[color:var(--leaf-green)]/30">
+      <main className="mx-auto w-full max-w-[640px] space-y-6 px-4 pb-24 pt-6 antialiased selection:bg-[color:var(--leaf-green)]/30">
         {/* Header Section */}
         <header className="mb-8">
           <h1 className="text-[24px] font-bold text-[var(--text-primary)]">
@@ -43,7 +115,8 @@ export default function SettingsPage() {
             <label className="flex cursor-pointer items-center justify-between border-b border-white/5 p-4 transition-colors hover:bg-[var(--surface-bright)]">
               <span className="text-[15px] font-normal">English</span>
               <input
-                defaultChecked
+                checked={language === "ENGLISH"}
+                onChange={() => setLanguage("ENGLISH")}
                 className="h-5 w-5 border-white/20 bg-[var(--surface-raised)] text-[var(--leaf-green)] focus:ring-[var(--leaf-green)] focus:ring-offset-[var(--background)]"
                 type="radio"
                 name="language"
@@ -52,6 +125,8 @@ export default function SettingsPage() {
             <label className="flex cursor-pointer items-center justify-between border-b border-white/5 p-4 transition-colors hover:bg-[var(--surface-bright)]">
               <span className="text-[15px] font-normal">Filipino</span>
               <input
+                checked={language === "FILIPINO"}
+                onChange={() => setLanguage("FILIPINO")}
                 className="h-5 w-5 border-white/20 bg-[var(--surface-raised)] text-[var(--leaf-green)] focus:ring-[var(--leaf-green)] focus:ring-offset-[var(--background)]"
                 type="radio"
                 name="language"
@@ -60,6 +135,8 @@ export default function SettingsPage() {
             <label className="flex cursor-pointer items-center justify-between p-4 transition-colors hover:bg-[var(--surface-bright)]">
               <span className="text-[15px] font-normal">Cebuano</span>
               <input
+                checked={language === "CEBUANO"}
+                onChange={() => setLanguage("CEBUANO")}
                 className="h-5 w-5 border-white/20 bg-[var(--surface-raised)] text-[var(--leaf-green)] focus:ring-[var(--leaf-green)] focus:ring-offset-[var(--background)]"
                 type="radio"
                 name="language"
@@ -80,16 +157,53 @@ export default function SettingsPage() {
             </button>
           </div>
           <div className="space-y-2">
-            {["Brgy San Jose", "Brgy Maligaya"].map((loc) => (
+            {barangays.items.map((loc) => (
               <div
                 key={loc}
                 className="flex items-center justify-between rounded-lg border border-white/12 bg-[var(--surface-raised)] p-4 shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   <Pin className="h-5 w-5 text-[var(--text-muted)]" />
-                  <span className="text-[15px] font-normal">{loc}</span>
+                  <div>
+                    <span className="text-[15px] font-normal">{loc}</span>
+                    {defaultLabel === loc && (
+                      <div className="mt-0.5 text-[11px] font-medium text-[var(--leaf-green)]">
+                        Default
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <GripVertical className="h-5 w-5 cursor-grab text-[var(--text-muted)]" />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenMenuFor((prev) => (prev === loc ? null : loc))
+                    }
+                    aria-label="Barangay options"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <MoreVertical className="h-5 w-5" />
+                  </button>
+
+                  {openMenuFor === loc && (
+                    <div className="absolute right-0 top-10 z-50 w-40 overflow-hidden rounded-lg border border-white/10 bg-[var(--surface)] shadow-xl">
+                      <button
+                        type="button"
+                        onClick={() => setDefault(loc)}
+                        className="block w-full px-4 py-3 text-left text-[13px] text-white hover:bg-white/5"
+                      >
+                        Set as default
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeBarangay(loc)}
+                        className="block w-full px-4 py-3 text-left text-[13px] text-[var(--terracotta)] hover:bg-white/5"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -103,15 +217,23 @@ export default function SettingsPage() {
           <div className="divide-y divide-white/5 overflow-hidden rounded-xl border border-white/5 bg-[var(--surface)]">
             <div className="flex items-center justify-between p-4">
               <span className="text-[15px] font-normal">Critical Risk Alerts</span>
-              <input
-                type="checkbox"
-                defaultChecked
-                className="h-5 w-5 accent-[var(--leaf-green)]"
+              <Toggle
+                checked={settings.criticalRiskAlerts}
+                onChange={(checked) =>
+                  saveSettings({ ...settings, criticalRiskAlerts: checked })
+                }
+                ariaLabel="Critical Risk Alerts"
               />
             </div>
             <div className="flex items-center justify-between p-4">
               <span className="text-[15px] font-normal">Low-Bandwidth Mode</span>
-              <input type="checkbox" className="h-5 w-5 accent-[var(--leaf-green)]" />
+              <Toggle
+                checked={settings.lowBandwidthMode}
+                onChange={(checked) =>
+                  saveSettings({ ...settings, lowBandwidthMode: checked })
+                }
+                ariaLabel="Low-Bandwidth Mode"
+              />
             </div>
           </div>
         </section>
@@ -124,18 +246,30 @@ export default function SettingsPage() {
           <div className="divide-y divide-white/5 overflow-hidden rounded-xl border border-white/5 bg-[var(--surface)]">
             <div className="flex items-center justify-between p-4">
               <span className="text-[15px] font-normal">Large Text</span>
-              <input type="checkbox" className="h-5 w-5 accent-[var(--leaf-green)]" />
+              <Toggle
+                checked={settings.largeText}
+                onChange={(checked) => saveSettings({ ...settings, largeText: checked })}
+                ariaLabel="Large Text"
+              />
             </div>
             <div className="flex items-center justify-between p-4">
               <span className="text-[15px] font-normal">High Contrast</span>
-              <input type="checkbox" className="h-5 w-5 accent-[var(--leaf-green)]" />
+              <Toggle
+                checked={settings.highContrast}
+                onChange={(checked) =>
+                  saveSettings({ ...settings, highContrast: checked })
+                }
+                ariaLabel="High Contrast"
+              />
             </div>
             <div className="flex items-center justify-between p-4">
               <span className="text-[15px] font-normal">Auto Text-to-Speech</span>
-              <input
-                type="checkbox"
-                defaultChecked
-                className="h-5 w-5 accent-[var(--leaf-green)]"
+              <Toggle
+                checked={settings.autoTextToSpeech}
+                onChange={(checked) =>
+                  saveSettings({ ...settings, autoTextToSpeech: checked })
+                }
+                ariaLabel="Auto Text-to-Speech"
               />
             </div>
           </div>

@@ -209,6 +209,14 @@
   scrollbar-width: none;
 }
 
+html.large-text {
+  font-size: 18px;
+}
+
+.dark.high-contrast {
+  --text-muted: #ffffff;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

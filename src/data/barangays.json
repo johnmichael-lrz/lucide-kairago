@@ -1,0 +1,1282 @@
+[
+  {
+    "name": "Agtangao",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.567541,
+    "longitude": 120.630137
+  },
+  {
+    "name": "Angad",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.582103,
+    "longitude": 120.630356
+  },
+  {
+    "name": "Bañacao",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.612519,
+    "longitude": 120.585769
+  },
+  {
+    "name": "Bangbangar",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.611206,
+    "longitude": 120.601597
+  },
+  {
+    "name": "Cabuloan",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.597223,
+    "longitude": 120.596963
+  },
+  {
+    "name": "Calaba",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.61456,
+    "longitude": 120.609358
+  },
+  {
+    "name": "Cosili East",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.583527,
+    "longitude": 120.651128
+  },
+  {
+    "name": "Cosili West",
+    "municipality": "Bangued",
+    "province": "Abra",
+    "region": "Cordillera Administrative Region (CAR)",
+    "latitude": 17.594816,
+    "longitude": 120.638857
+  },
+  {
+    "name": "Alvañiz",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.922319,
+    "longitude": 122.082882
+  },
+  {
+    "name": "Amparo",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.932604,
+    "longitude": 121.987367
+  },
+  {
+    "name": "Apgahan",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.898142,
+    "longitude": 121.980818
+  },
+  {
+    "name": "Aureliana",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.883903,
+    "longitude": 121.981141
+  },
+  {
+    "name": "Badiangan",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.954797,
+    "longitude": 122.045151
+  },
+  {
+    "name": "Bernaldo A. Julagting",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.881276,
+    "longitude": 122.052928
+  },
+  {
+    "name": "Carit-An",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.955351,
+    "longitude": 122.007132
+  },
+  {
+    "name": "Cuyapiao",
+    "municipality": "Patnongon",
+    "province": "Antique",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.893686,
+    "longitude": 122.055757
+  },
+  {
+    "name": "Abuanan",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.528586,
+    "longitude": 122.991618
+  },
+  {
+    "name": "Alianza",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.472616,
+    "longitude": 122.923084
+  },
+  {
+    "name": "Atipuluan",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.504368,
+    "longitude": 122.959623
+  },
+  {
+    "name": "Bacong-Montilla",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.519513,
+    "longitude": 123.037925
+  },
+  {
+    "name": "Bagroy",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.480047,
+    "longitude": 122.869102
+  },
+  {
+    "name": "Balingasag",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.537814,
+    "longitude": 122.843416
+  },
+  {
+    "name": "Binubuhan",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.45753,
+    "longitude": 122.982002
+  },
+  {
+    "name": "Busay",
+    "municipality": "Bago City",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.53713,
+    "longitude": 122.895972
+  },
+  {
+    "name": "Amin",
+    "municipality": "Isabela",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.238481,
+    "longitude": 123.058373
+  },
+  {
+    "name": "Banogbanog",
+    "municipality": "Isabela",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.193868,
+    "longitude": 123.106675
+  },
+  {
+    "name": "Barangay 1",
+    "municipality": "Isabela",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.197877,
+    "longitude": 122.983508
+  },
+  {
+    "name": "Barangay 2",
+    "municipality": "Isabela",
+    "province": "Negros Occidental",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 10.204289,
+    "longitude": 122.98246
+  },
+  {
+    "name": "Abaca",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.127069,
+    "longitude": 122.717166
+  },
+  {
+    "name": "Asisig",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.108644,
+    "longitude": 122.684601
+  },
+  {
+    "name": "Bantayan",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.086708,
+    "longitude": 122.692667
+  },
+  {
+    "name": "Braulan",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.135564,
+    "longitude": 122.734026
+  },
+  {
+    "name": "Cabugao Nuevo",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.070745,
+    "longitude": 122.672747
+  },
+  {
+    "name": "Cabugao Viejo",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.073172,
+    "longitude": 122.669025
+  },
+  {
+    "name": "Camiri",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.08394,
+    "longitude": 122.657136
+  },
+  {
+    "name": "Catan-Agan",
+    "municipality": "San Enrique",
+    "province": "Iloilo",
+    "region": "Western Visayas (Region VI)",
+    "latitude": 11.121555,
+    "longitude": 122.744843
+  },
+  {
+    "name": "Ali-Is",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.543101,
+    "longitude": 122.876769
+  },
+  {
+    "name": "Banaybanay",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.594476,
+    "longitude": 122.851656
+  },
+  {
+    "name": "Banga",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.370818,
+    "longitude": 122.804311
+  },
+  {
+    "name": "Boyco",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.361206,
+    "longitude": 122.806115
+  },
+  {
+    "name": "Bugay",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.638771,
+    "longitude": 122.848581
+  },
+  {
+    "name": "Cansumalig",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.405413,
+    "longitude": 122.903234
+  },
+  {
+    "name": "Dawis",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.6102,
+    "longitude": 122.87247
+  },
+  {
+    "name": "Kalamtukan",
+    "municipality": "Bayawan City",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.579935,
+    "longitude": 122.757996
+  },
+  {
+    "name": "Cabaroan",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.59037,
+    "longitude": 120.37105
+  },
+  {
+    "name": "Cabittaogan",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.569839,
+    "longitude": 120.354051
+  },
+  {
+    "name": "Cabuloan",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.584237,
+    "longitude": 120.366768
+  },
+  {
+    "name": "Pangada",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.584069,
+    "longitude": 120.376184
+  },
+  {
+    "name": "Paratong",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.583979,
+    "longitude": 120.345983
+  },
+  {
+    "name": "Poblacion",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.59038,
+    "longitude": 120.364332
+  },
+  {
+    "name": "Sinabaan",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.5871,
+    "longitude": 120.355764
+  },
+  {
+    "name": "Subec",
+    "municipality": "Santa Catalina",
+    "province": "Ilocos Sur",
+    "region": "Ilocos Region (Region I)",
+    "latitude": 17.581371,
+    "longitude": 120.350203
+  },
+  {
+    "name": "Alangilan",
+    "municipality": "Santa Catalina",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.286226,
+    "longitude": 122.896083
+  },
+  {
+    "name": "Amio",
+    "municipality": "Santa Catalina",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.411533,
+    "longitude": 122.927542
+  },
+  {
+    "name": "Buenavista",
+    "municipality": "Santa Catalina",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.365494,
+    "longitude": 122.955796
+  },
+  {
+    "name": "Caigangan",
+    "municipality": "Santa Catalina",
+    "province": "Negros Oriental",
+    "region": "Central Visayas (Region VII)",
+    "latitude": 9.37403,
+    "longitude": 122.950988
+  },
+  {
+    "name": "Allab",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.287125,
+    "longitude": 125.213811
+  },
+  {
+    "name": "Anapolon",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.437531,
+    "longitude": 125.141012
+  },
+  {
+    "name": "Badiangon",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.287728,
+    "longitude": 125.132429
+  },
+  {
+    "name": "Binoongan",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.484366,
+    "longitude": 125.200708
+  },
+  {
+    "name": "Dallag",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.237715,
+    "longitude": 125.215306
+  },
+  {
+    "name": "Datu Ladayon",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.429019,
+    "longitude": 125.224846
+  },
+  {
+    "name": "Datu Matangkil",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.46469,
+    "longitude": 125.180096
+  },
+  {
+    "name": "Doroluman",
+    "municipality": "Arakan",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.343375,
+    "longitude": 125.130487
+  },
+  {
+    "name": "Bagoaingud",
+    "municipality": "Pikit",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.011399,
+    "longitude": 124.704691
+  },
+  {
+    "name": "Balabak",
+    "municipality": "Pikit",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.126997,
+    "longitude": 124.71449
+  },
+  {
+    "name": "Balatican",
+    "municipality": "Pikit",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.087637,
+    "longitude": 124.6916
+  },
+  {
+    "name": "Balong",
+    "municipality": "Pikit",
+    "province": "North Cotabato",
+    "region": "SOCCSKSARGEN (Region XII)",
+    "latitude": 7.035286,
+    "longitude": 124.636578
+  },
+  {
+    "name": "Alang-Alang",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.343544,
+    "longitude": 125.284132
+  },
+  {
+    "name": "Bagacay",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.269643,
+    "longitude": 125.29736
+  },
+  {
+    "name": "Cahagwayan",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.294626,
+    "longitude": 125.271792
+  },
+  {
+    "name": "Can Maria",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.342388,
+    "longitude": 125.245232
+  },
+  {
+    "name": "Can Omanio",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.316429,
+    "longitude": 125.275422
+  },
+  {
+    "name": "Imelda",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.302976,
+    "longitude": 125.285863
+  },
+  {
+    "name": "Lapinig Del Norte",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.324099,
+    "longitude": 125.300775
+  },
+  {
+    "name": "Lapinig Del Sur",
+    "municipality": "Lapinig",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.311088,
+    "longitude": 125.295349
+  },
+  {
+    "name": "Balnasan",
+    "municipality": "San Roque",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.518432,
+    "longitude": 124.919631
+  },
+  {
+    "name": "Balud",
+    "municipality": "San Roque",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.531648,
+    "longitude": 124.906303
+  },
+  {
+    "name": "Bantayan",
+    "municipality": "San Roque",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.524231,
+    "longitude": 124.844765
+  },
+  {
+    "name": "Coroconog",
+    "municipality": "San Roque",
+    "province": "Northern Samar",
+    "region": "Eastern Visayas (Region VIII)",
+    "latitude": 12.508697,
+    "longitude": 124.893074
+  },
+  {
+    "name": "Balangkare Norte",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.599048,
+    "longitude": 121.039596
+  },
+  {
+    "name": "Balangkare Sur",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.582178,
+    "longitude": 121.033847
+  },
+  {
+    "name": "Balaring",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.613324,
+    "longitude": 121.121805
+  },
+  {
+    "name": "Belen",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.574261,
+    "longitude": 121.0552
+  },
+  {
+    "name": "Bravo",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.575046,
+    "longitude": 121.079721
+  },
+  {
+    "name": "Burol",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.55788,
+    "longitude": 121.000944
+  },
+  {
+    "name": "Kabulihan",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.566532,
+    "longitude": 121.032818
+  },
+  {
+    "name": "Mag-Asawang Sampaloc",
+    "municipality": "General Mamerto Natividad",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.594394,
+    "longitude": 121.054466
+  },
+  {
+    "name": "Batitang",
+    "municipality": "Zaragoza",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.416586,
+    "longitude": 120.807129
+  },
+  {
+    "name": "Carmen",
+    "municipality": "Zaragoza",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.449842,
+    "longitude": 120.830841
+  },
+  {
+    "name": "Concepcion",
+    "municipality": "Zaragoza",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.436186,
+    "longitude": 120.808474
+  },
+  {
+    "name": "Del Pilar",
+    "municipality": "Zaragoza",
+    "province": "Nueva Ecija",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.452721,
+    "longitude": 120.782204
+  },
+  {
+    "name": "Butong",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.797567,
+    "longitude": 125.040647
+  },
+  {
+    "name": "C-Handumanan",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.651962,
+    "longitude": 125.072607
+  },
+  {
+    "name": "Cawayan",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.674372,
+    "longitude": 125.202318
+  },
+  {
+    "name": "Cebole",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.664133,
+    "longitude": 125.101087
+  },
+  {
+    "name": "Delapa",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.663263,
+    "longitude": 125.159515
+  },
+  {
+    "name": "Dumalama",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.754456,
+    "longitude": 125.156945
+  },
+  {
+    "name": "Kiburiao",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.645958,
+    "longitude": 125.108291
+  },
+  {
+    "name": "Kipaypayon",
+    "municipality": "Quezon",
+    "province": "Bukidnon",
+    "region": "Northern Mindanao (Region X)",
+    "latitude": 7.767022,
+    "longitude": 125.193924
+  },
+  {
+    "name": "Lepanto",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.294956,
+    "longitude": 121.577051
+  },
+  {
+    "name": "Mangga",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.258189,
+    "longitude": 121.619289
+  },
+  {
+    "name": "Minagbag",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.362655,
+    "longitude": 121.605666
+  },
+  {
+    "name": "Samonte",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.270421,
+    "longitude": 121.58399
+  },
+  {
+    "name": "San Juan",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.224412,
+    "longitude": 121.615894
+  },
+  {
+    "name": "Santos",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.293198,
+    "longitude": 121.658512
+  },
+  {
+    "name": "Turod",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.221978,
+    "longitude": 121.563128
+  },
+  {
+    "name": "Abut",
+    "municipality": "Quezon",
+    "province": "Isabela",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 17.331675,
+    "longitude": 121.666618
+  },
+  {
+    "name": "Aurora",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.477152,
+    "longitude": 121.295057
+  },
+  {
+    "name": "Baresbes",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.482669,
+    "longitude": 121.241442
+  },
+  {
+    "name": "Bonifacio",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.502795,
+    "longitude": 121.315909
+  },
+  {
+    "name": "Buliwao",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.466439,
+    "longitude": 121.270213
+  },
+  {
+    "name": "Calaocan",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.471298,
+    "longitude": 121.366197
+  },
+  {
+    "name": "Caliat",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.495133,
+    "longitude": 121.298597
+  },
+  {
+    "name": "Dagupan",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.496053,
+    "longitude": 121.3686
+  },
+  {
+    "name": "Darubba",
+    "municipality": "Quezon",
+    "province": "Nueva Vizcaya",
+    "region": "Cagayan Valley (Region II)",
+    "latitude": 16.479748,
+    "longitude": 121.322981
+  },
+  {
+    "name": "Alfonso XIII",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.270133,
+    "longitude": 117.962571
+  },
+  {
+    "name": "Aramaywan",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.392159,
+    "longitude": 118.151948
+  },
+  {
+    "name": "Berong",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.455524,
+    "longitude": 118.221087
+  },
+  {
+    "name": "Calatagbak",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.261131,
+    "longitude": 118.095548
+  },
+  {
+    "name": "Calumpang",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.148842,
+    "longitude": 117.813338
+  },
+  {
+    "name": "Isugod",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.341749,
+    "longitude": 118.09238
+  },
+  {
+    "name": "Maasin",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.300877,
+    "longitude": 118.063913
+  },
+  {
+    "name": "Malatgao",
+    "municipality": "Quezon",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.200655,
+    "longitude": 117.969328
+  },
+  {
+    "name": "Apad",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.048535,
+    "longitude": 122.103673
+  },
+  {
+    "name": "Argosino",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.060765,
+    "longitude": 122.138129
+  },
+  {
+    "name": "Barangay I",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.005886,
+    "longitude": 122.186719
+  },
+  {
+    "name": "Barangay II",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.005876,
+    "longitude": 122.18457
+  },
+  {
+    "name": "Barangay III",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.008037,
+    "longitude": 122.184378
+  },
+  {
+    "name": "Barangay IV",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.009263,
+    "longitude": 122.189213
+  },
+  {
+    "name": "Barangay V",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.007356,
+    "longitude": 122.182387
+  },
+  {
+    "name": "Barangay VI",
+    "municipality": "Quezon",
+    "province": "Quezon",
+    "region": "CALABARZON (Region IV-A)",
+    "latitude": 14.008276,
+    "longitude": 122.190458
+  },
+  {
+    "name": "Batong Buhay",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.861213,
+    "longitude": 120.92481
+  },
+  {
+    "name": "Buenavista",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.86086,
+    "longitude": 120.782626
+  },
+  {
+    "name": "Burgos",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.652026,
+    "longitude": 120.920106
+  },
+  {
+    "name": "Claudio Salgado",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.930348,
+    "longitude": 120.780083
+  },
+  {
+    "name": "General Emilio Aguinaldo",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.706965,
+    "longitude": 120.87112
+  },
+  {
+    "name": "Ibud",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.88883,
+    "longitude": 120.87912
+  },
+  {
+    "name": "Ilvita",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.957513,
+    "longitude": 120.859197
+  },
+  {
+    "name": "Lagnas",
+    "municipality": "Sablayan",
+    "province": "Occidental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.925144,
+    "longitude": 120.927584
+  },
+  {
+    "name": "Anoling",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.096485,
+    "longitude": 121.48688
+  },
+  {
+    "name": "Bacungan",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.092336,
+    "longitude": 121.468515
+  },
+  {
+    "name": "Bangbang",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.045481,
+    "longitude": 121.442595
+  },
+  {
+    "name": "Banilad",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.091293,
+    "longitude": 121.552981
+  },
+  {
+    "name": "Buli",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.09628,
+    "longitude": 121.497884
+  },
+  {
+    "name": "Cacawan",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.079304,
+    "longitude": 121.513362
+  },
+  {
+    "name": "Calingag",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 13.031063,
+    "longitude": 121.44115
+  },
+  {
+    "name": "Del Razon",
+    "municipality": "Pinamalayan",
+    "province": "Oriental Mindoro",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 12.993784,
+    "longitude": 121.483643
+  },
+  {
+    "name": "Babuyan",
+    "municipality": "Puerto Princesa City",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.961484,
+    "longitude": 118.917472
+  },
+  {
+    "name": "Matahimik",
+    "municipality": "Puerto Princesa City",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.744487,
+    "longitude": 118.737033
+  },
+  {
+    "name": "Matiyaga",
+    "municipality": "Puerto Princesa City",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.743887,
+    "longitude": 118.73001
+  },
+  {
+    "name": "Maunlad",
+    "municipality": "Puerto Princesa City",
+    "province": "Palawan",
+    "region": "MIMAROPA (Region IV-B)",
+    "latitude": 9.731618,
+    "longitude": 118.737606
+  },
+  {
+    "name": "Bahay Pare",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.035272,
+    "longitude": 120.914761
+  },
+  {
+    "name": "Bambang",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.06855,
+    "longitude": 120.850746
+  },
+  {
+    "name": "Barangca",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.122456,
+    "longitude": 120.936233
+  },
+  {
+    "name": "Barit",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.012092,
+    "longitude": 120.872398
+  },
+  {
+    "name": "Buas",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.097058,
+    "longitude": 120.863754
+  },
+  {
+    "name": "Candaba Swamp",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.102748,
+    "longitude": 120.901957
+  },
+  {
+    "name": "Cuayang Bugtong",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.201169,
+    "longitude": 120.931429
+  },
+  {
+    "name": "Dalayap",
+    "municipality": "Candaba",
+    "province": "Pampanga",
+    "region": "Central Luzon (Region III)",
+    "latitude": 15.009613,
+    "longitude": 120.920717
+  }
+]

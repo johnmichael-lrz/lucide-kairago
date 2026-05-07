@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  Activity,
-  UserCircle,
   Target,
   ListFilter,
   X,
@@ -14,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Header } from "@/components/Header";
 
 type RiskLevel = "SAFE" | "MODERATE RISK" | "EVACUATE NOW";
 
@@ -110,25 +109,12 @@ export default function MapPage() {
 
   return (
     <>
-      {/* Top Navigation Bar */}
-      <header className="fixed top-0 z-40 w-full border-b border-white/10 bg-[var(--surface)]">
-        <div className="mx-auto flex h-14 w-full max-w-[640px] items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-[var(--primary)]" />
-            <span className="tracking-tight text-[24px] font-bold text-[var(--on-surface)]">
-              Kairago
-            </span>
-          </div>
-          <div className="flex items-center">
-            <UserCircle className="h-6 w-6 text-[var(--on-surface)]" />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Map Content & Overlays */}
-      <main className="map-bg relative mx-auto h-screen w-full max-w-[640px] overflow-hidden pb-[64px] pt-14">
+      <main className="map-bg relative mx-auto h-[calc(100vh-56px)] w-full max-w-[640px] overflow-hidden pb-[64px]">
         {/* Currently Viewing Header */}
-        <div className="absolute left-0 right-0 top-[68px] z-20 px-4">
+        <div className="absolute left-0 right-0 top-3 z-20 px-4">
           <div className="flex items-center justify-between rounded-xl border border-white/12 bg-[color:var(--surface-raised)]/90 p-3 shadow-2xl backdrop-blur-md">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-[color:var(--primary)]/20 p-2">

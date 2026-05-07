@@ -1,21 +1,29 @@
+import barangays from "@/data/barangays.json";
+
 export interface BarangayLocation {
   name: string;
+  municipality: string;
+  province: string;
+  region: string;
   latitude: number;
   longitude: number;
 }
 
-export const BARANGAYS: BarangayLocation[] = [
-  { name: "Barangay Pag-asa", latitude: 14.6507, longitude: 121.0794 },
-  { name: "Barangay San Roque Marikina", latitude: 14.6507, longitude: 121.1 },
-  { name: "Barangay Poblacion Leyte", latitude: 11.2442, longitude: 124.9996 },
-];
+export const BARANGAYS: BarangayLocation[] = barangays as BarangayLocation[];
 
 export function findBarangayByName(name: string): BarangayLocation | undefined {
-  return BARANGAYS.find((b) => b.name.toLowerCase() === name.toLowerCase());
+  const q = name.trim().toLowerCase();
+  return BARANGAYS.find((b) => b.name.toLowerCase() === q);
 }
 
 export function searchBarangays(query: string): BarangayLocation[] {
-  if (!query.trim()) return BARANGAYS;
-  const q = query.toLowerCase();
-  return BARANGAYS.filter((b) => b.name.toLowerCase().includes(q));
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return BARANGAYS.filter((b) => {
+    return (
+      b.name.toLowerCase().includes(q) ||
+      b.municipality.toLowerCase().includes(q) ||
+      b.province.toLowerCase().includes(q)
+    );
+  });
 }

@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Activity,
-  UserCircle,
   MapPin,
   TriangleAlert,
   CircleAlert,
@@ -12,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Header } from "@/components/Header";
 
 type RiskFilter = "ALL" | "HIGH" | "MODERATE" | "SAFE";
 
@@ -101,20 +100,7 @@ export default function HistoryPage() {
 
   return (
     <>
-      {/* Top AppBar */}
-      <header className="z-50 border-b border-white/10 bg-[var(--surface)]">
-        <div className="mx-auto flex h-14 w-full max-w-[640px] items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <Activity className="h-5 w-5 text-[var(--primary)]" />
-            <span className="tracking-tight text-[24px] font-bold text-[var(--on-surface)]">
-              Kairago
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <UserCircle className="h-6 w-6 text-[var(--primary)]" />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="custom-scrollbar mx-auto w-full max-w-[640px] flex-1 overflow-y-auto px-4 pb-24 pt-6 text-[15px] font-normal leading-[1.5]">
         {/* Page Title */}

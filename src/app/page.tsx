@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity,
   MapPin,
   LocateFixed,
   X,
@@ -18,12 +17,24 @@ import {
   Cloud,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { searchBarangays, type BarangayLocation } from "@/lib/barangay-geocoding";
+import {
+  BARANGAYS,
+  searchBarangays,
+  type BarangayLocation,
+} from "@/lib/barangay-geocoding";
 import { type Bulletin } from "@/lib/bulletin-schema";
 import { Toast } from "@/components/toast";
+import { Header } from "@/components/Header";
+import {
+  readKairagoBarangays,
+  readKairagoSettings,
+  writeKairagoBarangays,
+  type KairagoBarangays,
+} from "@/lib/kairago-storage";
+import { useLanguage, type AppLanguage } from "@/context/LanguageContext";
 
 type Scenario = "safe" | "moderate" | "evacuate";
-type Language = "ENGLISH" | "FILIPINO" | "CEBUANO";
+type Language = AppLanguage;
 
 const RISK_LEVEL_LABEL: Record<Scenario, string> = {
   safe: "SAFE",
@@ -101,6 +112,7 @@ function ListenBulletinButton(props: {
 }
 
 export default function Home() {
+  const { language: activeLanguage, setLanguage: setActiveLanguage } = useLanguage();
   const [scenario, setScenario] = useState<Scenario>("safe");
   const [isSpeakingBulletin, setIsSpeakingBulletin] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -113,11 +125,14 @@ export default function Home() {
   const [isLoadingBulletin, setIsLoadingBulletin] = useState(false);
   const [progressMessage, setProgressMessage] = useState("");
   const [liveBulletin, setLiveBulletin] = useState<Bulletin | null>(null);
-  const [activeLanguage, setActiveLanguage] = useState<Language>("ENGLISH");
   const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [healthStatus, setHealthStatus] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<BarangayLocation[]>([]);
+  const [savedBarangays, setSavedBarangays] = useState<KairagoBarangays>({
+    items: [],
+  });
+  const [autoTtsEnabled, setAutoTtsEnabled] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -126,6 +141,48 @@ export default function Home() {
   useEffect(() => {
     setLandfallEtaMs(6 * 60 * 60 * 1000);
   }, []);
+
+  useEffect(() => {
+    setSavedBarangays(readKairagoBarangays());
+    setAutoTtsEnabled(readKairagoSettings().autoTextToSpeech);
+
+    const onBarangaysUpdate = (e: Event) => {
+      const ce = e as CustomEvent;
+      if (ce.detail) setSavedBarangays(ce.detail as KairagoBarangays);
+      else setSavedBarangays(readKairagoBarangays());
+    };
+    const onSettingsUpdate = (e: Event) => {
+      const ce = e as CustomEvent;
+      if (ce.detail) setAutoTtsEnabled(!!(ce.detail as any).autoTextToSpeech);
+      else setAutoTtsEnabled(readKairagoSettings().autoTextToSpeech);
+    };
+    const onStorage = () => {
+      setSavedBarangays(readKairagoBarangays());
+      setAutoTtsEnabled(readKairagoSettings().autoTextToSpeech);
+    };
+
+    window.addEventListener("kairago-barangays-updated", onBarangaysUpdate);
+    window.addEventListener("kairago-settings-updated", onSettingsUpdate);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("kairago-barangays-updated", onBarangaysUpdate);
+      window.removeEventListener("kairago-settings-updated", onSettingsUpdate);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!autoTtsEnabled) return;
+    if (typeof window === "undefined") return;
+    if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined")
+      return;
+    if (!liveBulletin?.bulletin_text) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(liveBulletin.bulletin_text);
+    utterance.lang = "en-US";
+    window.speechSynthesis.speak(utterance);
+  }, [autoTtsEnabled, liveBulletin?.bulletin_text]);
 
   // Cleanup speech on unmount
   useEffect(() => {
@@ -201,7 +258,7 @@ export default function Home() {
       setShowSuggestions(false);
       return;
     }
-    const results = searchBarangays(searchQuery);
+    const results = searchBarangays(searchQuery).slice(0, 50);
     setSuggestions(results);
     setShowSuggestions(results.length > 0);
   }, [searchQuery]);
@@ -238,6 +295,7 @@ export default function Home() {
       setLiveBulletin(null);
       setTranslatedText(null);
       setActiveLanguage("ENGLISH");
+      setIsTranslating(false);
 
       try {
         const res = await fetch("/api/agent/stream", {
@@ -281,6 +339,22 @@ export default function Home() {
   );
 
   // ── Search ───────────────────────────────────────────────────────────────
+  const addSavedBarangay = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const next = {
+        ...savedBarangays,
+        items: savedBarangays.items.includes(trimmed)
+          ? savedBarangays.items
+          : [trimmed, ...savedBarangays.items],
+      };
+      setSavedBarangays(next);
+      writeKairagoBarangays(next);
+    },
+    [savedBarangays]
+  );
+
   const handleSearch = useCallback(
     (name: string, coords?: { lat: number; lng: number }) => {
       if (!name.trim()) return;
@@ -310,12 +384,6 @@ export default function Home() {
     setIsLocating(true);
     setLocationErrorVisible(false);
 
-    const seeded = [
-      { name: "Barangay Pag-asa", lat: 14.6507, lon: 121.0794 },
-      { name: "Barangay San Roque Marikina", lat: 14.6507, lon: 121.1 },
-      { name: "Barangay Poblacion Leyte", lat: 11.2442, lon: 124.9996 },
-    ] as const;
-
     const toRad = (deg: number) => (deg * Math.PI) / 180;
     const distKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
       const R = 6371;
@@ -328,20 +396,30 @@ export default function Home() {
     };
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude } = pos.coords;
-        let nearestName: string = seeded[0].name;
+        // Reverse geocode (server-side to avoid CORS; required by spec)
+        try {
+          await fetch(`/api/geocode/reverse?lat=${latitude}&lng=${longitude}`);
+        } catch {
+          // non-fatal
+        }
+
+        // Find nearest barangay in the dataset
+        let nearest = BARANGAYS[0];
         let nearestDist = Infinity;
-        for (const cur of seeded) {
-          const d = distKm(latitude, longitude, cur.lat, cur.lon);
+        for (const cur of BARANGAYS) {
+          const d = distKm(latitude, longitude, cur.latitude, cur.longitude);
           if (d < nearestDist) {
             nearestDist = d;
-            nearestName = cur.name;
+            nearest = cur;
           }
         }
-        setSearchQuery(nearestName);
+
+        setSearchQuery(nearest.name);
+        addSavedBarangay(nearest.name);
         setIsLocating(false);
-        runAgentPipeline(nearestName, { lat: latitude, lng: longitude });
+        runAgentPipeline(nearest.name, { lat: latitude, lng: longitude });
       },
       () => {
         setIsLocating(false);
@@ -349,19 +427,17 @@ export default function Home() {
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 }
     );
-  }, [runAgentPipeline]);
+  }, [runAgentPipeline, addSavedBarangay]);
 
   // ── Language translation ─────────────────────────────────────────────────
-  const handleLanguageChange = useCallback(
-    async (lang: Language) => {
-      if (lang === activeLanguage) return;
-      setActiveLanguage(lang);
-
-      if (lang === "ENGLISH") {
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (activeLanguage === "ENGLISH") {
         setTranslatedText(null);
         return;
       }
-      if (!liveBulletin) return;
+      if (!liveBulletin?.bulletin_text) return;
 
       setIsTranslating(true);
       try {
@@ -370,19 +446,22 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: liveBulletin.bulletin_text,
-            target_language: lang === "FILIPINO" ? "Filipino" : "Cebuano",
+            target_language: activeLanguage === "FILIPINO" ? "Filipino" : "Cebuano",
           }),
         });
         const data = await res.json();
-        if (data.translated_text) setTranslatedText(data.translated_text);
+        if (!cancelled && data.translated_text) setTranslatedText(data.translated_text);
       } catch {
-        setTranslatedText(null);
+        if (!cancelled) setTranslatedText(null);
       } finally {
-        setIsTranslating(false);
+        if (!cancelled) setIsTranslating(false);
       }
-    },
-    [activeLanguage, liveBulletin]
-  );
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLanguage, liveBulletin?.bulletin_text]);
 
   // ── Derived display values ───────────────────────────────────────────────
   const currentBulletinText = useMemo(() => {
@@ -502,23 +581,7 @@ export default function Home() {
         onHide={() => setToastVisible(false)}
       />
 
-      {/* Top AppBar */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[var(--surface)]">
-        <div className="mx-auto flex h-14 w-full max-w-[640px] items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-[var(--leaf-green)]" />
-            <h1 className="tracking-tight text-[24px] font-bold text-[var(--on-surface)]">
-              Kairago
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold tracking-widest text-[var(--leaf-green)]">
-              SYSTEM LIVE
-            </span>
-            <div className="h-2 w-2 animate-pulse rounded-full bg-[var(--leaf-green)]" />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="mx-auto w-full max-w-[640px] px-4 pb-24">
         {/* API Health Row */}
@@ -553,7 +616,7 @@ export default function Home() {
               type="button"
               suppressHydrationWarning
               disabled={isTranslating}
-              onClick={() => handleLanguageChange(lang)}
+              onClick={() => setActiveLanguage(lang)}
               className={cn(
                 "px-4 py-3 text-[11px] font-medium tracking-[0.1em] transition-colors disabled:opacity-50",
                 activeLanguage === lang
@@ -589,15 +652,16 @@ export default function Home() {
             {showSuggestions && (
               <div
                 ref={suggestionsRef}
-                className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-lg border border-white/12 bg-[var(--surface-raised)] shadow-xl"
+                className="absolute left-0 right-0 top-full z-40 mt-1 max-h-[288px] overflow-y-auto rounded-lg border border-white/12 bg-[var(--surface-raised)] shadow-xl"
               >
-                {suggestions.map((s) => (
+                {suggestions.slice(0, 100).map((s) => (
                   <button
-                    key={s.name}
+                    key={`${s.name}-${s.municipality}-${s.province}`}
                     type="button"
                     onMouseDown={(e) => {
                       e.preventDefault();
                       setSearchQuery(s.name);
+                      addSavedBarangay(s.name);
                       handleSearch(s.name, {
                         lat: s.latitude,
                         lng: s.longitude,
@@ -606,7 +670,12 @@ export default function Home() {
                     className="flex w-full items-center gap-2 px-4 py-3 text-left text-[14px] text-[var(--on-surface)] transition-colors hover:bg-white/5"
                   >
                     <MapPin className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
-                    {s.name}
+                    <span className="flex-1">
+                      <span className="block">{s.name}</span>
+                      <span className="block text-[12px] text-[var(--text-muted)]">
+                        {s.municipality}, {s.province}
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -642,56 +711,99 @@ export default function Home() {
 
         {/* Saved Barangay Chips */}
         <div className="mt-4 flex flex-wrap gap-2">
-          {["Santa Rosa", "San Lorenzo", "Don Bosco"].map((chip) => (
+          {savedBarangays.items.map((chip) => (
             <div
               key={chip}
-              className="flex items-center gap-1 rounded-full border border-white/20 bg-white/5 px-3 py-1.5"
+              className={cn(
+                "flex items-center gap-1 rounded-full border bg-white/5 px-3 py-1.5",
+                savedBarangays.default === chip
+                  ? "border-[color:var(--leaf-green)]/60"
+                  : "border-white/20"
+              )}
             >
+              {savedBarangays.default === chip && (
+                <span className="mr-1 rounded-full bg-[color:var(--leaf-green)]/20 px-2 py-0.5 text-[9px] font-bold tracking-[0.12em] text-[var(--leaf-green)]">
+                  DEFAULT
+                </span>
+              )}
               <span className="text-[11px] font-medium text-[var(--on-surface)]">
                 {chip}
               </span>
-              <X className="h-4 w-4 cursor-pointer text-[var(--text-muted)]" />
+              <button
+                type="button"
+                aria-label={`Remove ${chip}`}
+                onClick={() => {
+                  const next = {
+                    ...savedBarangays,
+                    items: savedBarangays.items.filter((b) => b !== chip),
+                    default:
+                      savedBarangays.default === chip
+                        ? undefined
+                        : savedBarangays.default,
+                  };
+                  setSavedBarangays(next);
+                  writeKairagoBarangays(next);
+                }}
+                className="ml-1 text-[var(--text-muted)] transition-colors hover:text-white"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
             </div>
           ))}
         </div>
 
         {/* Scenario Tabs */}
-        <div className="mt-8 flex border-b border-white/5">
+        <div className="mt-8 flex gap-2">
           <button
             type="button"
             suppressHydrationWarning
             onClick={() => setScenario("safe")}
-            className={
-              scenario === "safe"
-                ? "flex-1 border-b-2 border-[var(--leaf-green)] py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--leaf-green)]"
-                : "flex-1 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]"
-            }
+            className="flex-1 py-2"
           >
-            SAFE
+            <span
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-2 py-1 text-[10px] font-medium tracking-[0.1em] transition-colors",
+                scenario === "safe"
+                  ? "bg-[color:var(--leaf-green)]/15 text-[var(--leaf-green)]"
+                  : "text-[var(--text-muted)]"
+              )}
+            >
+              SAFE
+            </span>
           </button>
           <button
             type="button"
             suppressHydrationWarning
             onClick={() => setScenario("moderate")}
-            className={
-              scenario === "moderate"
-                ? "flex-1 border-b-2 border-[var(--golden-yellow)] py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--golden-yellow)]"
-                : "flex-1 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]"
-            }
+            className="flex-1 py-2"
           >
-            MODERATE RISK
+            <span
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-2 py-1 text-[10px] font-medium tracking-[0.1em] transition-colors",
+                scenario === "moderate"
+                  ? "bg-[color:var(--golden-yellow)]/15 text-[var(--golden-yellow)]"
+                  : "text-[var(--text-muted)]"
+              )}
+            >
+              MODERATE RISK
+            </span>
           </button>
           <button
             type="button"
             suppressHydrationWarning
             onClick={() => setScenario("evacuate")}
-            className={
-              scenario === "evacuate"
-                ? "flex-1 border-b-2 border-[var(--terracotta)] py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--terracotta)]"
-                : "flex-1 py-3 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]"
-            }
+            className="flex-1 py-2"
           >
-            EVACUATE NOW
+            <span
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-2 py-1 text-[10px] font-medium tracking-[0.1em] transition-colors",
+                scenario === "evacuate"
+                  ? "bg-[color:var(--terracotta)]/15 text-[var(--terracotta)]"
+                  : "text-[var(--text-muted)]"
+              )}
+            >
+              EVACUATE NOW
+            </span>
           </button>
         </div>
 
@@ -699,7 +811,7 @@ export default function Home() {
 
         {isLoadingBulletin ? (
           /* Loading state */
-          <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
+          <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
             <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-5" />
             <div className="relative space-y-4 p-5">
               <div className="flex items-center gap-3">
@@ -717,7 +829,7 @@ export default function Home() {
           <>
             {/* ── SAFE card ── */}
             {scenario === "safe" && (
-              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
+              <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-10" />
                 <div className="relative space-y-4 p-5">
                   <div className="flex items-start justify-between">
@@ -729,7 +841,13 @@ export default function Home() {
                         SAFE
                       </h2>
                     </div>
-                    <div className="rounded-full border border-[var(--leaf-green)] bg-[color:var(--leaf-green)]/20 px-2 py-1">
+                    <div className="flex items-center gap-2 rounded-full border border-[var(--leaf-green)] bg-[color:var(--leaf-green)]/20 px-2 py-1">
+                      {isTranslating && (
+                        <Loader2
+                          className="h-3 w-3 animate-spin text-[var(--leaf-green)]"
+                          aria-hidden
+                        />
+                      )}
                       <span className="text-[11px] font-medium uppercase text-[var(--leaf-green)]">
                         {showLiveSafe ? confidenceLabel : "Data Confidence High"}
                       </span>
@@ -757,7 +875,7 @@ export default function Home() {
 
             {/* ── MODERATE RISK card ── */}
             {scenario === "moderate" && (
-              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--golden-yellow)] bg-[var(--surface)]">
+              <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--golden-yellow)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--golden-yellow)] opacity-10" />
                 <div className="relative space-y-4 p-5">
                   <div className="flex items-start justify-between">
@@ -797,7 +915,7 @@ export default function Home() {
 
             {/* ── EVACUATE NOW card ── */}
             {scenario === "evacuate" && (
-              <div className="relative mt-6 overflow-hidden rounded-r-xl border-l-4 border-[var(--terracotta)] bg-[var(--surface)]">
+              <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--terracotta)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--terracotta)] opacity-10" />
                 <div className="relative space-y-4 p-5">
                   <div className="flex items-start justify-between">

@@ -1,31 +1,19 @@
 import {
-  Activity,
-  UserCircle,
   Cloud,
   Globe,
   Waves,
   Thermometer,
   Terminal,
 } from "lucide-react";
+import { Header } from "@/components/Header";
 
 export default function AboutPage() {
   return (
     <>
-      {/* Top AppBar Shell */}
-      <header className="fixed top-0 z-50 w-full bg-[var(--surface)]">
-        <div className="mx-auto flex h-14 w-full max-w-screen-sm items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-[var(--leaf-green)]" />
-            <span className="tracking-tight text-[24px] font-bold text-[var(--on-surface)]">
-              Kairago
-            </span>
-          </div>
-          <UserCircle className="h-6 w-6 text-[var(--text-muted)]" />
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content Canvas */}
-      <main className="mx-auto w-full max-w-screen-sm flex-grow px-4 pb-24 pt-14">
+      <main className="mx-auto w-full max-w-screen-sm flex-grow px-4 pb-24">
         {/* Hero Section: About Kairago */}
         <section className="mb-10 mt-8">
           <h1 className="mb-1 text-[24px] font-bold text-[var(--leaf-green)]">
