@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#3f0113",
+                    "on-secondary-container": "#90e7af",
+                    "on-primary": "#00391b",
+                    "primary-fixed-dim": "#87d89e",
+                    "on-background": "#f0dfd5",
+                    "surface-container-lowest": "#140d07",
+                    "text-primary": "#FFFFFF",
+                    "primary-green": "hsl(145, 45%, 35%)",
+                    "surface-bright": "#413730",
+                    "golden-yellow": "hsl(42, 85%, 55%)",
+                    "secondary-fixed-dim": "#82d8a2",
+                    "tertiary-fixed-dim": "#ffb2bc",
+                    "surface-variant": "#3c332c",
+                    "surface-container": "#261e18",
+                    "terracotta": "hsl(15, 65%, 48%)",
+                    "on-primary-container": "#e8ffe9",
+                    "on-primary-fixed-variant": "#00522a",
+                    "inverse-surface": "#f0dfd5",
+                    "surface-raised": "hsl(25, 30%, 16%)",
+                    "error-container": "#93000a",
+                    "outline": "#899389",
+                    "primary": "#87d89e",
+                    "on-tertiary-fixed-variant": "#792d3c",
+                    "on-secondary": "#00391f",
+                    "text-body": "hsl(35, 30%, 85%)",
+                    "surface-dim": "#19120c",
+                    "on-surface-variant": "#bfc9be",
+                    "on-surface": "#f0dfd5",
+                    "inverse-on-surface": "#382f28",
+                    "on-primary-fixed": "#00210d",
+                    "outline-variant": "#3f4940",
+                    "secondary-fixed": "#9df5bc",
+                    "on-secondary-fixed-variant": "#00522f",
+                    "surface-container-low": "#221a14",
+                    "on-error-container": "#ffdad6",
+                    "on-error": "#690005",
+                    "background": "hsl(25, 40%, 8%)",
+                    "error": "#ffb4ab",
+                    "on-secondary-fixed": "#002110",
+                    "primary-container": "#31814f",
+                    "leaf-green": "hsl(145, 40%, 50%)",
+                    "on-tertiary": "#5c1626",
+                    "secondary": "#82d8a2",
+                    "inverse-primary": "#176c3c",
+                    "primary-fixed": "#a3f5b8",
+                    "text-muted": "hsl(35, 15%, 55%)",
+                    "surface-container-highest": "#3c332c",
+                    "surface-tint": "#87d89e",
+                    "tertiary-fixed": "#ffd9dd",
+                    "tertiary": "#ffb2bc",
+                    "secondary-container": "#006a3e",
+                    "on-tertiary-container": "#fff7f7",
+                    "surface-container-high": "#312822",
+                    "tertiary-container": "#af5766",
+                    "surface": "hsl(25, 35%, 12%)"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "touch-target": "44px",
+                    "max-width": "640px",
+                    "base-unit": "4px",
+                    "card-gap": "16px",
+                    "section-gap": "24px"
+            },
+            "fontSize": {
+                    "recommended-action": ["17px", {"fontWeight": "700"}],
+                    "page-heading": ["24px", {"fontWeight": "700"}],
+                    "card-summary": ["13px", {"fontWeight": "400"}],
+                    "section-label": ["11px", {"letterSpacing": "0.1em", "fontWeight": "500"}],
+                    "label-pill": ["11px", {"fontWeight": "500"}],
+                    "english-translation": ["20px", {"fontWeight": "400"}],
+                    "bulletin-text": ["15px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "risk-level": ["48px", {"lineHeight": "1.1", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: hsl(25, 40%, 8%);
+            color: #f0dfd5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .tonal-border {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen">
+<!-- Top AppBar Shell -->
+<header class="bg-surface dark:bg-surface fixed top-0 w-full z-50">
+<div class="flex justify-between items-center h-14 px-4 w-full max-w-screen-sm mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-leaf-green" data-icon="sensors">sensors</span>
+<span class="text-page-heading font-page-heading text-on-surface dark:text-on-surface tracking-tight">Kairago</span>
+</div>
+<span class="material-symbols-outlined text-text-muted" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-14 pb-24 w-full max-w-screen-sm mx-auto px-4">
+<!-- Hero Section: About Kairago -->
+<section class="mt-8 mb-10">
+<h1 class="text-page-heading font-page-heading text-leaf-green mb-1">ABOUT KAIRAGO</h1>
+<p class="text-english-translation font-recommended-action text-text-primary leading-tight mb-4">Intelligence at the critical moment</p>
+<div class="relative w-full aspect-video rounded-xl overflow-hidden mb-6 tonal-border">
+<img class="object-cover w-full h-full opacity-60" data-alt="A high-tech digital visualization of atmospheric data flowing across a dark globe, rendered in a minimalist style with deep earth tones and vibrant green accents. The lighting is low-key, emphasizing data nodes and glowing connectivity lines. The overall aesthetic is sober and utilitarian, reflecting precision and disaster risk intelligence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6F-CPTPtuRxuWXPuIsTelE1s264Zv6-qRYoUtKU8-j2LBeWKB5dZCT2yR6ttyioI81XrI_ecVdVeglyDctV-Q76CpO7OozHdWTzQfOPanPkR7pebMFmJRT7IeIlmXM38bHx0PbUTTyFtA_H6filxhlB1gH3dXFKmba2KqNkYuFpflhXyzue46RZmOKcITfCAgeyMF1-H02CfcUnrINX6CcNbgt6UA1g_cfDGPBd0KMWNTpL_upkZWgy8CiePxzMJRqQRF1fUE1xaR"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+</div>
+<p class="text-bulletin-text font-bulletin-text text-text-body">
+                Kairago serves as a vital intelligence bridge, translating national scientific weather data into actionable local insights. We operate at the intersection of risk and readiness, ensuring that critical warnings reach the barangay level before the moment of impact.
+            </p>
+</section>
+<!-- Real-Time Data Sources: 2x2 Bento Grid -->
+<section class="mb-10">
+<h2 class="text-section-label font-section-label text-text-muted mb-4">REAL-TIME DATA SOURCES</h2>
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 1: PAGASA -->
+<div class="bg-surface p-4 rounded-xl tonal-border">
+<div class="flex justify-between items-start mb-3">
+<span class="material-symbols-outlined text-leaf-green" data-icon="cloud">cloud</span>
+<div class="w-2 h-2 rounded-full bg-leaf-green"></div>
+</div>
+<h3 class="font-recommended-action text-text-primary mb-1">PAGASA</h3>
+<p class="text-card-summary font-card-summary text-text-muted">Local atmospheric patterns and tropical cyclone tracking.</p>
+</div>
+<!-- Card 2: NASA -->
+<div class="bg-surface p-4 rounded-xl tonal-border">
+<div class="flex justify-between items-start mb-3">
+<span class="material-symbols-outlined text-leaf-green" data-icon="public">public</span>
+<div class="w-2 h-2 rounded-full bg-leaf-green"></div>
+</div>
+<h3 class="font-recommended-action text-text-primary mb-1">NASA POWER</h3>
+<p class="text-card-summary font-card-summary text-text-muted">Global climatology data and solar radiation monitoring.</p>
+</div>
+<!-- Card 3: NOAA -->
+<div class="bg-surface p-4 rounded-xl tonal-border">
+<div class="flex justify-between items-start mb-3">
+<span class="material-symbols-outlined text-leaf-green" data-icon="waves">waves</span>
+<div class="w-2 h-2 rounded-full bg-leaf-green"></div>
+</div>
+<h3 class="font-recommended-action text-text-primary mb-1">NOAA</h3>
+<p class="text-card-summary font-card-summary text-text-muted">Oceanic disturbances and oceanic-atmospheric shifts.</p>
+</div>
+<!-- Card 4: PHIVOLCS -->
+<div class="bg-surface p-4 rounded-xl tonal-border">
+<div class="flex justify-between items-start mb-3">
+<span class="material-symbols-outlined text-leaf-green" data-icon="mode_heat">mode_heat</span>
+<div class="w-2 h-2 rounded-full bg-leaf-green"></div>
+</div>
+<h3 class="font-recommended-action text-text-primary mb-1">PHIVOLCS</h3>
+<p class="text-card-summary font-card-summary text-text-muted">Seismic activity and volcanic threat assessments.</p>
+</div>
+</div>
+</section>
+<!-- How It Works: Vertical Timeline -->
+<section class="mb-10">
+<h2 class="text-section-label font-section-label text-text-muted mb-4">HOW IT WORKS</h2>
+<div class="space-y-3">
+<div class="bg-surface-raised p-4 rounded-lg tonal-border flex items-center gap-4">
+<div class="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-surface border border-white/10 text-leaf-green font-bold">1</div>
+<div>
+<h4 class="font-recommended-action text-text-primary text-sm">Continuous Ingestion</h4>
+<p class="text-card-summary font-card-summary text-text-muted">Global and local satellite feeds updated every 15 minutes.</p>
+</div>
+</div>
+<div class="bg-surface-raised p-4 rounded-lg tonal-border flex items-center gap-4">
+<div class="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-surface border border-white/10 text-leaf-green font-bold">2</div>
+<div>
+<h4 class="font-recommended-action text-text-primary text-sm">AI Synthesis</h4>
+<p class="text-card-summary font-card-summary text-text-muted">Patterns are analyzed against historical local impact data.</p>
+</div>
+</div>
+<div class="bg-surface-raised p-4 rounded-lg tonal-border flex items-center gap-4">
+<div class="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-surface border border-white/10 text-leaf-green font-bold">3</div>
+<div>
+<h4 class="font-recommended-action text-text-primary text-sm">Direct Bulletins</h4>
+<p class="text-card-summary font-card-summary text-text-muted">Localized risk assessments pushed directly to your device.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Project Meta: Built at CodeKada -->
+<section class="mb-12">
+<h2 class="text-section-label font-section-label text-text-muted mb-4">BUILT AT CODEKADA 2026</h2>
+<div class="bg-surface p-6 rounded-xl tonal-border">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-8 h-8 bg-terracotta rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg" data-icon="terminal">terminal</span>
+</div>
+<p class="text-bulletin-text font-bulletin-text text-text-body">
+                        Engineered during the 2026 CodeKada hackathon to address climate resilience in vulnerable regions.
+                    </p>
+</div>
+<div class="flex gap-2">
+<span class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-label-pill font-label-pill text-leaf-green">LICENSE: MIT</span>
+<span class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-label-pill font-label-pill text-text-muted">V1.0.0-BETA</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface dark:bg-surface border-t border-white/12 z-50">
+<div class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-section-label font-section-label">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-section-label font-section-label">Map</span>
+</div>
+<div class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="text-section-label font-section-label">History</span>
+</div>
+<div class="flex flex-col items-center justify-center text-leaf-green dark:text-leaf-green scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+<span class="text-section-label font-section-label">About</span>
+</div>
+<div class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-section-label font-section-label">Settings</span>
+</div>
+</nav>
+</body></html>
