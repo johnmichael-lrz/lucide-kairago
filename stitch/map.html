@@ -1,261 +1,437 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
-        }
-        body {
-            background-color: hsl(25, 40%, 8%);
-            overscroll-behavior-y: none;
-        }
-        /* Custom map styling to mimic requested aesthetic */
-        .map-bg {
-            background-color: hsl(25, 40%, 8%);
-            background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 100%);
-        }
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="viewport"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+        vertical-align: middle;
+      }
+      body {
+        background-color: hsl(25, 40%, 8%);
+        overscroll-behavior-y: none;
+      }
+      /* Custom map styling to mimic requested aesthetic */
+      .map-bg {
+        background-color: hsl(25, 40%, 8%);
+        background-image: radial-gradient(
+          circle at 50% 50%,
+          rgba(255, 255, 255, 0.03) 0%,
+          transparent 100%
+        );
+      }
     </style>
-<script id="tailwind-config">
+    <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
         theme: {
           extend: {
-            "colors": {
-                    "on-tertiary-fixed": "#3f0113",
-                    "on-secondary-container": "#90e7af",
-                    "on-primary": "#00391b",
-                    "primary-fixed-dim": "#87d89e",
-                    "on-background": "#f0dfd5",
-                    "surface-container-lowest": "#140d07",
-                    "text-primary": "#FFFFFF",
-                    "primary-green": "hsl(145, 45%, 35%)",
-                    "surface-bright": "#413730",
-                    "golden-yellow": "hsl(42, 85%, 55%)",
-                    "secondary-fixed-dim": "#82d8a2",
-                    "tertiary-fixed-dim": "#ffb2bc",
-                    "surface-variant": "#3c332c",
-                    "surface-container": "#261e18",
-                    "terracotta": "hsl(15, 65%, 48%)",
-                    "on-primary-container": "#e8ffe9",
-                    "on-primary-fixed-variant": "#00522a",
-                    "inverse-surface": "#f0dfd5",
-                    "surface-raised": "hsl(25, 30%, 16%)",
-                    "error-container": "#93000a",
-                    "outline": "#899389",
-                    "primary": "#87d89e",
-                    "on-tertiary-fixed-variant": "#792d3c",
-                    "on-secondary": "#00391f",
-                    "text-body": "hsl(35, 30%, 85%)",
-                    "surface-dim": "#19120c",
-                    "on-surface-variant": "#bfc9be",
-                    "on-surface": "#f0dfd5",
-                    "inverse-on-surface": "#382f28",
-                    "on-primary-fixed": "#00210d",
-                    "outline-variant": "#3f4940",
-                    "secondary-fixed": "#9df5bc",
-                    "on-secondary-fixed-variant": "#00522f",
-                    "surface-container-low": "#221a14",
-                    "on-error-container": "#ffdad6",
-                    "on-error": "#690005",
-                    "background": "hsl(25, 40%, 8%)",
-                    "error": "#ffb4ab",
-                    "on-secondary-fixed": "#002110",
-                    "primary-container": "#31814f",
-                    "leaf-green": "hsl(145, 40%, 50%)",
-                    "on-tertiary": "#5c1626",
-                    "secondary": "#82d8a2",
-                    "inverse-primary": "#176c3c",
-                    "primary-fixed": "#a3f5b8",
-                    "text-muted": "hsl(35, 15%, 55%)",
-                    "surface-container-highest": "#3c332c",
-                    "surface-tint": "#87d89e",
-                    "tertiary-fixed": "#ffd9dd",
-                    "tertiary": "#ffb2bc",
-                    "secondary-container": "#006a3e",
-                    "on-tertiary-container": "#fff7f7",
-                    "surface-container-high": "#312822",
-                    "tertiary-container": "#af5766",
-                    "surface": "hsl(25, 35%, 12%)"
+            colors: {
+              "on-tertiary-fixed": "#3f0113",
+              "on-secondary-container": "#90e7af",
+              "on-primary": "#00391b",
+              "primary-fixed-dim": "#87d89e",
+              "on-background": "#f0dfd5",
+              "surface-container-lowest": "#140d07",
+              "text-primary": "#FFFFFF",
+              "primary-green": "hsl(145, 45%, 35%)",
+              "surface-bright": "#413730",
+              "golden-yellow": "hsl(42, 85%, 55%)",
+              "secondary-fixed-dim": "#82d8a2",
+              "tertiary-fixed-dim": "#ffb2bc",
+              "surface-variant": "#3c332c",
+              "surface-container": "#261e18",
+              terracotta: "hsl(15, 65%, 48%)",
+              "on-primary-container": "#e8ffe9",
+              "on-primary-fixed-variant": "#00522a",
+              "inverse-surface": "#f0dfd5",
+              "surface-raised": "hsl(25, 30%, 16%)",
+              "error-container": "#93000a",
+              outline: "#899389",
+              primary: "#87d89e",
+              "on-tertiary-fixed-variant": "#792d3c",
+              "on-secondary": "#00391f",
+              "text-body": "hsl(35, 30%, 85%)",
+              "surface-dim": "#19120c",
+              "on-surface-variant": "#bfc9be",
+              "on-surface": "#f0dfd5",
+              "inverse-on-surface": "#382f28",
+              "on-primary-fixed": "#00210d",
+              "outline-variant": "#3f4940",
+              "secondary-fixed": "#9df5bc",
+              "on-secondary-fixed-variant": "#00522f",
+              "surface-container-low": "#221a14",
+              "on-error-container": "#ffdad6",
+              "on-error": "#690005",
+              background: "hsl(25, 40%, 8%)",
+              error: "#ffb4ab",
+              "on-secondary-fixed": "#002110",
+              "primary-container": "#31814f",
+              "leaf-green": "hsl(145, 40%, 50%)",
+              "on-tertiary": "#5c1626",
+              secondary: "#82d8a2",
+              "inverse-primary": "#176c3c",
+              "primary-fixed": "#a3f5b8",
+              "text-muted": "hsl(35, 15%, 55%)",
+              "surface-container-highest": "#3c332c",
+              "surface-tint": "#87d89e",
+              "tertiary-fixed": "#ffd9dd",
+              tertiary: "#ffb2bc",
+              "secondary-container": "#006a3e",
+              "on-tertiary-container": "#fff7f7",
+              "surface-container-high": "#312822",
+              "tertiary-container": "#af5766",
+              surface: "hsl(25, 35%, 12%)",
             },
-            "borderRadius": {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.5rem",
-                    "xl": "0.75rem",
-                    "full": "9999px"
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
             },
-            "spacing": {
-                    "touch-target": "44px",
-                    "max-width": "640px",
-                    "base-unit": "4px",
-                    "card-gap": "16px",
-                    "section-gap": "24px"
+            spacing: {
+              "touch-target": "44px",
+              "max-width": "640px",
+              "base-unit": "4px",
+              "card-gap": "16px",
+              "section-gap": "24px",
             },
-            "fontSize": {
-                    "recommended-action": ["17px", {"fontWeight": "700"}],
-                    "page-heading": ["24px", {"fontWeight": "700"}],
-                    "card-summary": ["13px", {"fontWeight": "400"}],
-                    "section-label": ["11px", {"letterSpacing": "0.1em", "fontWeight": "500"}],
-                    "label-pill": ["11px", {"fontWeight": "500"}],
-                    "english-translation": ["20px", {"fontWeight": "400"}],
-                    "bulletin-text": ["15px", {"lineHeight": "1.5", "fontWeight": "400"}],
-                    "risk-level": ["48px", {"lineHeight": "1.1", "fontWeight": "800"}]
-            }
+            fontSize: {
+              "recommended-action": ["17px", { fontWeight: "700" }],
+              "page-heading": ["24px", { fontWeight: "700" }],
+              "card-summary": ["13px", { fontWeight: "400" }],
+              "section-label": [
+                "11px",
+                { letterSpacing: "0.1em", fontWeight: "500" },
+              ],
+              "label-pill": ["11px", { fontWeight: "500" }],
+              "english-translation": ["20px", { fontWeight: "400" }],
+              "bulletin-text": [
+                "15px",
+                { lineHeight: "1.5", fontWeight: "400" },
+              ],
+              "risk-level": ["48px", { lineHeight: "1.1", fontWeight: "800" }],
+            },
           },
         },
-      }
+      };
     </script>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
   </head>
-<body class="bg-background text-on-background selection:bg-primary/30">
-<!-- Top Navigation Bar -->
-<header class="bg-surface border-b border-white/10 docked full-width top-0 z-40 fixed">
-<div class="flex justify-between items-center h-14 px-4 w-full max-w-[640px] mx-auto">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary" data-icon="sensors">sensors</span>
-<span class="text-page-heading font-page-heading text-on-surface tracking-tight">Kairago</span>
-</div>
-<div class="flex items-center">
-<span class="material-symbols-outlined text-on-surface" data-icon="account_circle">account_circle</span>
-</div>
-</div>
-</header>
-<!-- Map Content & Overlays -->
-<main class="relative h-screen w-full max-w-[640px] mx-auto pt-14 pb-[64px] overflow-hidden map-bg">
-<!-- Currently Viewing Header -->
-<div class="absolute top-[68px] left-0 right-0 px-4 z-20">
-<div class="bg-surface-raised/90 backdrop-blur-md rounded-xl border border-white/12 p-3 flex items-center justify-between shadow-2xl">
-<div class="flex items-center gap-3">
-<div class="bg-primary/20 p-2 rounded-lg">
-<span class="material-symbols-outlined text-primary text-[20px]" data-icon="target">target</span>
-</div>
-<div>
-<p class="text-section-label font-section-label text-text-muted uppercase leading-none mb-1">CURRENTLY VIEWING</p>
-<p class="text-[15px] font-bold text-white">Leyte Province, Region VIII</p>
-</div>
-</div>
-<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors">
-<span class="material-symbols-outlined text-on-surface" data-icon="filter_list">filter_list</span>
-</button>
-</div>
-<!-- Filter Chips -->
-<div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-2">
-<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0">
-<span class="text-label-pill font-label-pill text-on-surface">Pag-asa</span>
-<span class="material-symbols-outlined text-[14px] text-text-muted" data-icon="close">close</span>
-</div>
-<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0">
-<span class="text-label-pill font-label-pill text-on-surface">San Roque</span>
-<span class="material-symbols-outlined text-[14px] text-text-muted" data-icon="close">close</span>
-</div>
-<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0">
-<span class="text-label-pill font-label-pill text-on-surface">Poblacion</span>
-<span class="material-symbols-outlined text-[14px] text-text-muted" data-icon="close">close</span>
-</div>
-</div>
-</div>
-<!-- Simulated Map Visual -->
-<div class="absolute inset-0 z-0">
-<img class="w-full h-full object-cover opacity-60" data-alt="A specialized digital satellite map of Leyte Province with a dark aesthetic. The water is a deep midnight brown-black, and the landmass is outlined in subtle, glowing 8% opacity white lines. The interface uses a minimalist tonal approach with earth-toned backgrounds and focuses on geographical clarity for disaster risk intelligence. High contrast status markers in green, yellow, and terracotta are scattered across the terrain." data-location="Leyte, Philippines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDowZc37FD2lHsL6zaU5XwqZO4x2IB7Ux4dR6XijJKL3cKumHJKWYcnuOPRdLCLQ5oNLpdhMTmm0auQSy_DS7XtLrJkm0r7YwddShbrlvbyrDOE50LcOutmwdl4LrA0bNkez5xp9IijMmBIPVa2X1awl4nSK9k3q0HZfA9XbllYWxdyGsU7uLDZf9Omj3N8NVU8enJBPTb7JLZbPpvDoSot-nJNRvrL7AnNUgoiRILZ5Qrs1Ci98FsNiA9dPeBXVDd4sTULXQfjuhAE"/>
-<!-- Map Markers -->
-<!-- Pag-asa (Green) -->
-<div class="absolute top-[35%] left-[45%] flex flex-col items-center">
-<div class="w-4 h-4 bg-leaf-green rounded-full border-2 border-white/20 shadow-[0_0_12px_rgba(135,216,158,0.5)]"></div>
-<span class="mt-1 text-[10px] font-bold text-leaf-green bg-background/60 px-1 rounded">PAG-ASA</span>
-</div>
-<!-- San Roque (Yellow) -->
-<div class="absolute top-[55%] left-[30%] flex flex-col items-center">
-<div class="w-4 h-4 bg-golden-yellow rounded-full border-2 border-white/20 shadow-[0_0_12px_rgba(255,212,0,0.5)]"></div>
-<span class="mt-1 text-[10px] font-bold text-golden-yellow bg-background/60 px-1 rounded">SAN ROQUE</span>
-</div>
-<!-- Poblacion (Terracotta) -->
-<div class="absolute top-[50%] left-[55%] flex flex-col items-center">
-<div class="w-6 h-6 bg-terracotta rounded-full border-4 border-white/30 shadow-[0_0_20px_rgba(199,84,38,0.6)] animate-pulse"></div>
-<span class="mt-1 text-[11px] font-extrabold text-white bg-terracotta px-2 py-0.5 rounded shadow-lg">POBLACION</span>
-</div>
-</div>
-<!-- Floating Action Buttons -->
-<div class="absolute right-4 bottom-[40%] z-20 flex flex-col gap-2">
-<button class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-on-surface">
-<span class="material-symbols-outlined" data-icon="add">add</span>
-</button>
-<button class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-on-surface">
-<span class="material-symbols-outlined" data-icon="remove">remove</span>
-</button>
-<button class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-primary mt-2">
-<span class="material-symbols-outlined" data-icon="my_location" data-weight="fill" style="font-variation-settings: 'FILL' 1;">my_location</span>
-</button>
-</div>
-<!-- Bottom Sheet -->
-<div class="absolute bottom-0 left-0 right-0 bg-surface border-t border-white/12 rounded-t-[24px] z-30 transform transition-transform duration-300 translate-y-0 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
-<div class="flex justify-center py-3">
-<div class="w-10 h-1 bg-white/20 rounded-full"></div>
-</div>
-<div class="px-6 pb-10">
-<div class="flex items-start justify-between mb-4">
-<div>
-<p class="text-section-label font-section-label text-text-muted mb-1">CURRENT LOCATION</p>
-<h2 class="text-[28px] font-bold text-white leading-tight">BARANGAY POBLACION</h2>
-</div>
-<div class="px-3 py-1 bg-terracotta/20 border border-terracotta/40 rounded-full shrink-0">
-<span class="text-label-pill font-label-pill text-terracotta uppercase">CRITICAL RISK</span>
-</div>
-</div>
-<!-- Risk Bulletin Card -->
-<div class="bg-terracotta/12 border-l-4 border-terracotta p-4 mb-6 rounded-r-lg">
-<div class="flex items-center gap-2 mb-2">
-<span class="material-symbols-outlined text-terracotta text-[20px]" data-icon="warning" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
-<span class="text-[18px] font-bold text-terracotta">EVACUATE NOW</span>
-</div>
-<p class="text-bulletin-text font-bulletin-text text-on-surface/90">
-                        Water levels have exceeded the <span class="font-bold text-white">12.5m threshold</span>. Immediate flash flooding is imminent in low-lying residential sectors.
-                    </p>
-</div>
-<!-- Data Row -->
-<div class="flex items-center justify-between mb-8">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-surface-raised border border-white/8 flex items-center justify-center">
-<span class="material-symbols-outlined text-text-muted" data-icon="groups">groups</span>
-</div>
-<span class="text-bulletin-text font-bulletin-text font-medium text-white">1,240 PEOPLE AFFECTED</span>
-</div>
-<button class="bg-surface-raised text-on-surface text-card-summary px-4 py-2 rounded-lg border border-white/12 font-medium">
-                        VIEW FULL REPORT
-                    </button>
-</div>
-</div>
-</div>
-</main>
-<!-- Bottom Navigation Bar -->
-<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface border-t border-white/12 z-50">
-<button class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors">
-<span class="material-symbols-outlined" data-icon="home">home</span>
-<span class="text-section-label font-section-label mt-1">Home</span>
-</button>
-<button class="flex flex-col items-center justify-center text-leaf-green scale-90 duration-150">
-<span class="material-symbols-outlined" data-icon="map" data-weight="fill" style="font-variation-settings: 'FILL' 1;">map</span>
-<span class="text-section-label font-section-label mt-1">Map</span>
-</button>
-<button class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors">
-<span class="material-symbols-outlined" data-icon="history">history</span>
-<span class="text-section-label font-section-label mt-1">History</span>
-</button>
-<button class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors">
-<span class="material-symbols-outlined" data-icon="info">info</span>
-<span class="text-section-label font-section-label mt-1">About</span>
-</button>
-<button class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors">
-<span class="material-symbols-outlined" data-icon="settings">settings</span>
-<span class="text-section-label font-section-label mt-1">Settings</span>
-</button>
-</nav>
-</body></html>
+  <body class="bg-background text-on-background selection:bg-primary/30">
+    <!-- Top Navigation Bar -->
+    <header
+      class="bg-surface border-b border-white/10 docked full-width top-0 z-40 fixed"
+    >
+      <div
+        class="flex justify-between items-center h-14 px-4 w-full max-w-[640px] mx-auto"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            class="material-symbols-outlined text-primary"
+            data-icon="sensors"
+            >sensors</span
+          >
+          <span
+            class="text-page-heading font-page-heading text-on-surface tracking-tight"
+            >Kairago</span
+          >
+        </div>
+        <div class="flex items-center">
+          <span
+            class="material-symbols-outlined text-on-surface"
+            data-icon="account_circle"
+            >account_circle</span
+          >
+        </div>
+      </div>
+    </header>
+    <!-- Map Content & Overlays -->
+    <main
+      class="relative h-screen w-full max-w-[640px] mx-auto pt-14 pb-[64px] overflow-hidden map-bg"
+    >
+      <!-- Currently Viewing Header -->
+      <div class="absolute top-[68px] left-0 right-0 px-4 z-20">
+        <div
+          class="bg-surface-raised/90 backdrop-blur-md rounded-xl border border-white/12 p-3 flex items-center justify-between shadow-2xl"
+        >
+          <div class="flex items-center gap-3">
+            <div class="bg-primary/20 p-2 rounded-lg">
+              <span
+                class="material-symbols-outlined text-primary text-[20px]"
+                data-icon="target"
+                >target</span
+              >
+            </div>
+            <div>
+              <p
+                class="text-section-label font-section-label text-text-muted uppercase leading-none mb-1"
+              >
+                CURRENTLY VIEWING
+              </p>
+              <p class="text-[15px] font-bold text-white">
+                Leyte Province, Region VIII
+              </p>
+            </div>
+          </div>
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <span
+              class="material-symbols-outlined text-on-surface"
+              data-icon="filter_list"
+              >filter_list</span
+            >
+          </button>
+        </div>
+        <!-- Filter Chips -->
+        <div class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-2">
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0"
+          >
+            <span class="text-label-pill font-label-pill text-on-surface"
+              >Pag-asa</span
+            >
+            <span
+              class="material-symbols-outlined text-[14px] text-text-muted"
+              data-icon="close"
+              >close</span
+            >
+          </div>
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0"
+          >
+            <span class="text-label-pill font-label-pill text-on-surface"
+              >San Roque</span
+            >
+            <span
+              class="material-symbols-outlined text-[14px] text-text-muted"
+              data-icon="close"
+              >close</span
+            >
+          </div>
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 bg-surface-raised border border-white/20 rounded-full shrink-0"
+          >
+            <span class="text-label-pill font-label-pill text-on-surface"
+              >Poblacion</span
+            >
+            <span
+              class="material-symbols-outlined text-[14px] text-text-muted"
+              data-icon="close"
+              >close</span
+            >
+          </div>
+        </div>
+      </div>
+      <!-- Simulated Map Visual -->
+      <div class="absolute inset-0 z-0">
+        <img
+          class="w-full h-full object-cover opacity-60"
+          data-alt="A specialized digital satellite map of Leyte Province with a dark aesthetic. The water is a deep midnight brown-black, and the landmass is outlined in subtle, glowing 8% opacity white lines. The interface uses a minimalist tonal approach with earth-toned backgrounds and focuses on geographical clarity for disaster risk intelligence. High contrast status markers in green, yellow, and terracotta are scattered across the terrain."
+          data-location="Leyte, Philippines"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDowZc37FD2lHsL6zaU5XwqZO4x2IB7Ux4dR6XijJKL3cKumHJKWYcnuOPRdLCLQ5oNLpdhMTmm0auQSy_DS7XtLrJkm0r7YwddShbrlvbyrDOE50LcOutmwdl4LrA0bNkez5xp9IijMmBIPVa2X1awl4nSK9k3q0HZfA9XbllYWxdyGsU7uLDZf9Omj3N8NVU8enJBPTb7JLZbPpvDoSot-nJNRvrL7AnNUgoiRILZ5Qrs1Ci98FsNiA9dPeBXVDd4sTULXQfjuhAE"
+        />
+        <!-- Map Markers -->
+        <!-- Pag-asa (Green) -->
+        <div class="absolute top-[35%] left-[45%] flex flex-col items-center">
+          <div
+            class="w-4 h-4 bg-leaf-green rounded-full border-2 border-white/20 shadow-[0_0_12px_rgba(135,216,158,0.5)]"
+          ></div>
+          <span
+            class="mt-1 text-[10px] font-bold text-leaf-green bg-background/60 px-1 rounded"
+            >PAG-ASA</span
+          >
+        </div>
+        <!-- San Roque (Yellow) -->
+        <div class="absolute top-[55%] left-[30%] flex flex-col items-center">
+          <div
+            class="w-4 h-4 bg-golden-yellow rounded-full border-2 border-white/20 shadow-[0_0_12px_rgba(255,212,0,0.5)]"
+          ></div>
+          <span
+            class="mt-1 text-[10px] font-bold text-golden-yellow bg-background/60 px-1 rounded"
+            >SAN ROQUE</span
+          >
+        </div>
+        <!-- Poblacion (Terracotta) -->
+        <div class="absolute top-[50%] left-[55%] flex flex-col items-center">
+          <div
+            class="w-6 h-6 bg-terracotta rounded-full border-4 border-white/30 shadow-[0_0_20px_rgba(199,84,38,0.6)] animate-pulse"
+          ></div>
+          <span
+            class="mt-1 text-[11px] font-extrabold text-white bg-terracotta px-2 py-0.5 rounded shadow-lg"
+            >POBLACION</span
+          >
+        </div>
+      </div>
+      <!-- Floating Action Buttons -->
+      <div class="absolute right-4 bottom-[40%] z-20 flex flex-col gap-2">
+        <button
+          class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-on-surface"
+        >
+          <span class="material-symbols-outlined" data-icon="add">add</span>
+        </button>
+        <button
+          class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-on-surface"
+        >
+          <span class="material-symbols-outlined" data-icon="remove"
+            >remove</span
+          >
+        </button>
+        <button
+          class="w-11 h-11 bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center shadow-xl text-primary mt-2"
+        >
+          <span
+            class="material-symbols-outlined"
+            data-icon="my_location"
+            data-weight="fill"
+            style="font-variation-settings: &quot;FILL&quot; 1"
+            >my_location</span
+          >
+        </button>
+      </div>
+      <!-- Bottom Sheet -->
+      <div
+        class="absolute bottom-0 left-0 right-0 bg-surface border-t border-white/12 rounded-t-[24px] z-30 transform transition-transform duration-300 translate-y-0 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]"
+      >
+        <div class="flex justify-center py-3">
+          <div class="w-10 h-1 bg-white/20 rounded-full"></div>
+        </div>
+        <div class="px-6 pb-10">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <p
+                class="text-section-label font-section-label text-text-muted mb-1"
+              >
+                CURRENT LOCATION
+              </p>
+              <h2 class="text-[28px] font-bold text-white leading-tight">
+                BARANGAY POBLACION
+              </h2>
+            </div>
+            <div
+              class="px-3 py-1 bg-terracotta/20 border border-terracotta/40 rounded-full shrink-0"
+            >
+              <span
+                class="text-label-pill font-label-pill text-terracotta uppercase"
+                >CRITICAL RISK</span
+              >
+            </div>
+          </div>
+          <!-- Risk Bulletin Card -->
+          <div
+            class="bg-terracotta/12 border-l-4 border-terracotta p-4 mb-6 rounded-r-lg"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <span
+                class="material-symbols-outlined text-terracotta text-[20px]"
+                data-icon="warning"
+                data-weight="fill"
+                style="font-variation-settings: &quot;FILL&quot; 1"
+                >warning</span
+              >
+              <span class="text-[18px] font-bold text-terracotta"
+                >EVACUATE NOW</span
+              >
+            </div>
+            <p class="text-bulletin-text font-bulletin-text text-on-surface/90">
+              Water levels have exceeded the
+              <span class="font-bold text-white">12.5m threshold</span>.
+              Immediate flash flooding is imminent in low-lying residential
+              sectors.
+            </p>
+          </div>
+          <!-- Data Row -->
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-surface-raised border border-white/8 flex items-center justify-center"
+              >
+                <span
+                  class="material-symbols-outlined text-text-muted"
+                  data-icon="groups"
+                  >groups</span
+                >
+              </div>
+              <span
+                class="text-bulletin-text font-bulletin-text font-medium text-white"
+                >1,240 PEOPLE AFFECTED</span
+              >
+            </div>
+            <button
+              class="bg-surface-raised text-on-surface text-card-summary px-4 py-2 rounded-lg border border-white/12 font-medium"
+            >
+              VIEW FULL REPORT
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Bottom Navigation Bar -->
+    <nav
+      class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface border-t border-white/12 z-50"
+    >
+      <a
+        href="./home.html"
+        class="flex flex-col items-center justify-center text-leaf-green active:scale-90 duration-150 transition-all"
+      >
+        <span
+          class="material-symbols-outlined"
+          style="font-variation-settings: &quot;FILL&quot; 1"
+          >home</span
+        >
+        <span class="text-section-label font-section-label">Home</span>
+      </a>
+      <a
+        href="./map.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">map</span>
+        <span class="text-section-label font-section-label">Map</span>
+      </a>
+      <a
+        href="./history.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">history</span>
+        <span class="text-section-label font-section-label">History</span>
+      </a>
+      <a
+        href="./about.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">info</span>
+        <span class="text-section-label font-section-label">About</span>
+      </a>
+      <a
+        href="./settings.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">settings</span>
+        <span class="text-section-label font-section-label">Settings</span>
+      </a>
+    </nav>
+  </body>
+</html>

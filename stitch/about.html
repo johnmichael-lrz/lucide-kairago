@@ -361,47 +361,47 @@
     </main>
     <!-- Bottom Navigation Shell -->
     <nav
-      class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface dark:bg-surface border-t border-white/12 z-50"
+      class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface border-t border-white/12 z-50"
     >
-      <div
-        class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface"
-      >
-        <span class="material-symbols-outlined" data-icon="home">home</span>
-        <span class="text-section-label font-section-label">Home</span>
-      </div>
-      <div
-        class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface"
-      >
-        <span class="material-symbols-outlined" data-icon="map">map</span>
-        <span class="text-section-label font-section-label">Map</span>
-      </div>
-      <div
-        class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface"
-      >
-        <span class="material-symbols-outlined" data-icon="history"
-          >history</span
-        >
-        <span class="text-section-label font-section-label">History</span>
-      </div>
-      <div
-        class="flex flex-col items-center justify-center text-leaf-green dark:text-leaf-green scale-90 duration-150"
+      <a
+        href="./home.html"
+        class="flex flex-col items-center justify-center text-leaf-green active:scale-90 duration-150 transition-all"
       >
         <span
           class="material-symbols-outlined"
-          data-icon="info"
           style="font-variation-settings: &quot;FILL&quot; 1"
-          >info</span
+          >home</span
         >
-        <span class="text-section-label font-section-label">About</span>
-      </div>
-      <div
-        class="flex flex-col items-center justify-center text-text-muted dark:text-text-muted transition-colors hover:text-on-surface"
+        <span class="text-section-label font-section-label">Home</span>
+      </a>
+      <a
+        href="./map.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
       >
-        <span class="material-symbols-outlined" data-icon="settings"
-          >settings</span
-        >
+        <span class="material-symbols-outlined">map</span>
+        <span class="text-section-label font-section-label">Map</span>
+      </a>
+      <a
+        href="./history.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">history</span>
+        <span class="text-section-label font-section-label">History</span>
+      </a>
+      <a
+        href="./about.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">info</span>
+        <span class="text-section-label font-section-label">About</span>
+      </a>
+      <a
+        href="./settings.html"
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">settings</span>
         <span class="text-section-label font-section-label">Settings</span>
-      </div>
+      </a>
     </nav>
   </body>
 </html>
