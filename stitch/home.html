@@ -1,0 +1,585 @@
+<!doctype html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      name="viewport"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        background-color: hsl(25, 40%, 8%);
+        color: #f0dfd5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      /*PAGASA*/
+      .weather-float {
+        animation: weatherFloat 2.8s ease-in-out infinite;
+      }
+      .weather-pulse {
+        animation: weatherPulse 1.6s ease-in-out infinite;
+      }
+      @keyframes weatherFloat {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      @keyframes weatherPulse {
+        0%,
+        100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.08);
+        }
+      }
+    </style>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#3f0113",
+              "on-secondary-container": "#90e7af",
+              "on-primary": "#00391b",
+              "primary-fixed-dim": "#87d89e",
+              "on-background": "#f0dfd5",
+              "surface-container-lowest": "#140d07",
+              "text-primary": "#FFFFFF",
+              "primary-green": "hsl(145, 45%, 35%)",
+              "surface-bright": "#413730",
+              "golden-yellow": "hsl(42, 85%, 55%)",
+              "secondary-fixed-dim": "#82d8a2",
+              "tertiary-fixed-dim": "#ffb2bc",
+              "surface-variant": "#3c332c",
+              "surface-container": "#261e18",
+              terracotta: "hsl(15, 65%, 48%)",
+              "on-primary-container": "#e8ffe9",
+              "on-primary-fixed-variant": "#00522a",
+              "inverse-surface": "#f0dfd5",
+              "surface-raised": "hsl(25, 30%, 16%)",
+              "error-container": "#93000a",
+              outline: "#899389",
+              primary: "#87d89e",
+              "on-tertiary-fixed-variant": "#792d3c",
+              "on-secondary": "#00391f",
+              "text-body": "hsl(35, 30%, 85%)",
+              "surface-dim": "#19120c",
+              "on-surface-variant": "#bfc9be",
+              "on-surface": "#f0dfd5",
+              "inverse-on-surface": "#382f28",
+              "on-primary-fixed": "#00210d",
+              "outline-variant": "#3f4940",
+              "secondary-fixed": "#9df5bc",
+              "on-secondary-fixed-variant": "#00522f",
+              "surface-container-low": "#221a14",
+              "on-error-container": "#ffdad6",
+              "on-error": "#690005",
+              background: "hsl(25, 40%, 8%)",
+              error: "#ffb4ab",
+              "on-secondary-fixed": "#002110",
+              "primary-container": "#31814f",
+              "leaf-green": "hsl(145, 40%, 50%)",
+              "on-tertiary": "#5c1626",
+              secondary: "#82d8a2",
+              "inverse-primary": "#176c3c",
+              "primary-fixed": "#a3f5b8",
+              "text-muted": "hsl(35, 15%, 55%)",
+              "surface-container-highest": "#3c332c",
+              "surface-tint": "#87d89e",
+              "tertiary-fixed": "#ffd9dd",
+              tertiary: "#ffb2bc",
+              "secondary-container": "#006a3e",
+              "on-tertiary-container": "#fff7f7",
+              "surface-container-high": "#312822",
+              "tertiary-container": "#af5766",
+              surface: "hsl(25, 35%, 12%)",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "touch-target": "44px",
+              "max-width": "640px",
+              "base-unit": "4px",
+              "card-gap": "16px",
+              "section-gap": "24px",
+            },
+            fontFamily: {},
+            fontSize: {
+              "recommended-action": ["17px", { fontWeight: "700" }],
+              "page-heading": ["24px", { fontWeight: "700" }],
+              "card-summary": ["13px", { fontWeight: "400" }],
+              "section-label": [
+                "11px",
+                { letterSpacing: "0.1em", fontWeight: "500" },
+              ],
+              "label-pill": ["11px", { fontWeight: "500" }],
+              "english-translation": ["20px", { fontWeight: "400" }],
+              "bulletin-text": [
+                "15px",
+                { lineHeight: "1.5", fontWeight: "400" },
+              ],
+              "risk-level": ["48px", { lineHeight: "1.1", fontWeight: "800" }],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        min-height: max(884px, 100dvh);
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-surface">
+    <header class="sticky top-0 z-50 bg-surface border-b border-white/10">
+      <div
+        class="flex justify-between items-center h-14 px-4 w-full max-w-[640px] mx-auto"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            class="material-symbols-outlined text-leaf-green"
+            style="font-variation-settings: &quot;FILL&quot; 1"
+            >sensors</span
+          >
+          <h1
+            class="text-page-heading font-page-heading text-on-surface tracking-tight"
+          >
+            Kairago
+          </h1>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold text-leaf-green tracking-widest"
+            >SYSTEM LIVE</span
+          >
+          <div class="w-2 h-2 rounded-full bg-leaf-green animate-pulse"></div>
+        </div>
+      </div>
+    </header>
+    <main class="w-full max-w-[640px] mx-auto px-4 pb-24">
+      <div
+        class="flex items-center justify-between py-3 border-b border-white/5 overflow-x-auto hide-scrollbar"
+      >
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-leaf-green"></div>
+            <span class="text-[9px] font-bold text-text-muted">PAGASA</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-leaf-green"></div>
+            <span class="text-[9px] font-bold text-text-muted">NOAA</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-leaf-green"></div>
+            <span class="text-[9px] font-bold text-text-muted">PHIVOLCS</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-leaf-green"></div>
+            <span class="text-[9px] font-bold text-text-muted uppercase"
+              >System Ok</span
+            >
+          </div>
+        </div>
+      </div>
+      <div
+        class="mt-4 bg-surface border-l-4 border-leaf-green relative overflow-hidden rounded-r-xl"
+      >
+        <div
+          class="absolute inset-0 bg-leaf-green opacity-10 pointer-events-none"
+        ></div>
+        <div class="relative p-4 flex items-start gap-3">
+          <div class="relative">
+            <span
+              class="material-symbols-outlined text-leaf-green text-[28px] weather-float"
+            >
+              cloud
+            </span>
+            <span
+              class="material-symbols-outlined text-leaf-green text-[14px] absolute -right-2 -top-1 weather-pulse"
+            >
+              wifi_tethering
+            </span>
+          </div>
+          <div class="min-w-0">
+            <p
+              class="text-section-label font-section-label text-text-muted mb-1"
+            >
+              WIND SIGNAL STATUS
+            </p>
+            <p id="weatherLineMain" class="text-bulletin-text text-text-body">
+              Waiting...
+            </p>
+            <p id="bulletinTimePHT" class="text-[11px] text-text-muted mt-1">
+              --:-- PHT
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex border-b border-white/5 mt-4">
+        <button
+          class="px-4 py-3 text-section-label font-section-label text-leaf-green border-b-2 border-leaf-green"
+        >
+          ENGLISH
+        </button>
+        <button
+          class="px-4 py-3 text-section-label font-section-label text-text-muted"
+        >
+          FILIPINO
+        </button>
+        <button
+          class="px-4 py-3 text-section-label font-section-label text-text-muted"
+        >
+          CEBUANO
+        </button>
+      </div>
+      <div class="mt-6 space-y-3">
+        <div class="relative">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[20px]"
+            >location_on</span
+          >
+          <input
+            class="w-full h-touch-target bg-surface-raised border border-white/12 rounded-lg pl-10 pr-4 text-bulletin-text italic text-text-muted focus:outline-none focus:border-leaf-green/50"
+            placeholder="Search for your barangay"
+            type="text"
+          />
+        </div>
+        <button
+          class="w-full h-touch-target bg-surface-raised border border-white/12 rounded-lg flex items-center justify-center gap-2 text-card-summary text-text-muted active:scale-95 transition-transform"
+        >
+          <span class="material-symbols-outlined text-[18px]">my_location</span>
+          USE MY LOCATION
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <div
+          class="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/20 rounded-full"
+        >
+          <span class="text-label-pill font-label-pill text-on-surface"
+            >Santa Rosa</span
+          ><span
+            class="material-symbols-outlined text-[16px] text-text-muted cursor-pointer"
+            >close</span
+          >
+        </div>
+        <div
+          class="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/20 rounded-full"
+        >
+          <span class="text-label-pill font-label-pill text-on-surface"
+            >San Lorenzo</span
+          ><span
+            class="material-symbols-outlined text-[16px] text-text-muted cursor-pointer"
+            >close</span
+          >
+        </div>
+        <div
+          class="flex items-center gap-1 px-3 py-1.5 bg-white/5 border border-white/20 rounded-full"
+        >
+          <span class="text-label-pill font-label-pill text-on-surface"
+            >Don Bosco</span
+          ><span
+            class="material-symbols-outlined text-[16px] text-text-muted cursor-pointer"
+            >close</span
+          >
+        </div>
+      </div>
+      <div class="flex border-b border-white/5 mt-8">
+        <button
+          class="flex-1 py-3 text-section-label font-section-label text-leaf-green border-b-2 border-leaf-green"
+        >
+          SAFE
+        </button>
+        <button
+          class="flex-1 py-3 text-section-label font-section-label text-text-muted"
+        >
+          MODERATE RISK
+        </button>
+        <button
+          class="flex-1 py-3 text-section-label font-section-label text-text-muted"
+        >
+          EVACUATE NOW
+        </button>
+      </div>
+      <div
+        class="mt-6 bg-surface border-l-4 border-leaf-green relative overflow-hidden rounded-r-xl"
+      >
+        <div
+          class="absolute inset-0 bg-leaf-green opacity-10 pointer-events-none"
+        ></div>
+        <div class="relative p-5 space-y-4">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1">
+              <span
+                class="text-section-label font-section-label text-text-muted block"
+                >STATUS</span
+              >
+              <h2 class="text-risk-level font-risk-level text-white">SAFE</h2>
+            </div>
+            <div
+              class="px-2 py-1 bg-leaf-green/20 border border-leaf-green rounded-full"
+            >
+              <span
+                class="text-label-pill font-label-pill text-leaf-green uppercase"
+                >Data Confidence High</span
+              >
+            </div>
+          </div>
+          <hr class="border-white/10" />
+          <p class="text-bulletin-text font-bulletin-text text-text-body">
+            Current atmospheric conditions indicate no immediate threat of
+            flooding or severe weather in your area. Satellite data shows clear
+            skies with minimal cloud formation. Local sensors report stable
+            water levels across all primary monitoring stations.
+          </p>
+          <div class="space-y-2 pt-2">
+            <span
+              class="text-section-label font-section-label text-text-muted block"
+              >RECOMMENDED ACTION</span
+            >
+            <div class="flex items-center justify-between">
+              <p
+                class="text-recommended-action font-recommended-action text-white"
+              >
+                No evacuation necessary. Monitor local channels
+              </p>
+              <span class="material-symbols-outlined text-white"
+                >arrow_forward</span
+              >
+            </div>
+          </div>
+          <div class="flex items-center justify-between pt-4">
+            <button
+              class="flex items-center gap-2 text-text-muted hover:text-white transition-colors"
+            >
+              <span class="material-symbols-outlined text-[20px]"
+                >volume_up</span
+              >
+              <span class="text-card-summary">LISTEN TO BULLETIN</span>
+            </button>
+            <div class="flex gap-4">
+              <span
+                class="material-symbols-outlined text-text-muted cursor-pointer hover:text-white"
+                >share</span
+              >
+              <span
+                class="material-symbols-outlined text-text-muted cursor-pointer hover:text-white"
+                >download</span
+              >
+              <span
+                class="material-symbols-outlined text-text-muted cursor-pointer hover:text-white"
+                >bookmark</span
+              >
+            </div>
+          </div>
+          <div
+            class="mt-4 border-t border-white/10 pt-3 text-[12px] leading-relaxed text-text-muted"
+          >
+            <p>
+              This bulletin is for supplemental guidance and does not replace
+              official advisories from NDRRMC and your LGU.
+            </p>
+            <p class="mt-1">
+              Ang bulletin na ito ay nagsisilbing karagdagang impormasyon at
+              hindi kapalit ng opisyal na abiso ng NDRRMC at LGU.
+            </p>
+          </div>
+        </div>
+      </div>
+      <section class="mt-10">
+        <div class="flex justify-between items-end mb-4">
+          <h3 class="text-section-label font-section-label text-text-muted">
+            72-HR RISK FORECAST
+          </h3>
+          <span class="text-label-pill font-label-pill text-leaf-green"
+            >STABLE TREND</span
+          >
+        </div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >12:00</span
+            >
+            <span
+              id="signalBadge1"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">0.2 mm/h</span>
+          </div>
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >18:00</span
+            >
+            <span
+              id="signalBadge2"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">0.5 mm/h</span>
+          </div>
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >00:00</span
+            >
+            <span
+              id="signalBadge3"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">1.2 mm/h</span>
+          </div>
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >06:00</span
+            >
+            <span
+              id="signalBadge4"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">1.0 mm/h</span>
+          </div>
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >12:00</span
+            >
+            <span
+              id="signalBadge5"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">0.1 mm/h</span>
+          </div>
+          <div
+            class="flex-shrink-0 w-24 bg-surface-raised border border-white/8 p-3 rounded-xl flex flex-col items-center gap-2"
+          >
+            <span class="text-section-label font-section-label text-text-muted"
+              >18:00</span
+            >
+            <span
+              id="signalBadge6"
+              class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-white/10 text-text-muted border-white/20"
+              >SIGNAL --</span
+            >
+            <span class="text-label-pill font-label-pill text-leaf-green"
+              >SAFE</span
+            >
+            <span class="text-card-summary text-text-muted">0.0 mm/h</span>
+          </div>
+        </div>
+      </section>
+      <div class="mt-8 flex flex-wrap gap-2 opacity-60">
+        <div class="px-2 py-1 bg-white/5 border border-white/10 rounded">
+          <span class="text-[9px] font-bold text-text-muted">PAGASA</span>
+        </div>
+        <div class="px-2 py-1 bg-white/5 border border-white/10 rounded">
+          <span class="text-[9px] font-bold text-text-muted">NASA POWER</span>
+        </div>
+        <div class="px-2 py-1 bg-white/5 border border-white/10 rounded">
+          <span class="text-[9px] font-bold text-text-muted">NOAA</span>
+        </div>
+        <div class="px-2 py-1 bg-white/5 border border-white/10 rounded">
+          <span class="text-[9px] font-bold text-text-muted">PHIVOLCS</span>
+        </div>
+      </div>
+    </main>
+    <nav
+      class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[640px] flex justify-around items-center h-[64px] px-2 pb-safe bg-surface border-t border-white/12 z-50"
+    >
+      <button
+        class="flex flex-col items-center justify-center text-leaf-green active:scale-90 duration-150 transition-all"
+      >
+        <span
+          class="material-symbols-outlined"
+          style="font-variation-settings: &quot;FILL&quot; 1"
+          >home</span
+        >
+        <span class="text-section-label font-section-label">Home</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">map</span
+        ><span class="text-section-label font-section-label">Map</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">history</span
+        ><span class="text-section-label font-section-label">History</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">info</span
+        ><span class="text-section-label font-section-label">About</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-text-muted hover:text-on-surface transition-colors"
+      >
+        <span class="material-symbols-outlined">settings</span
+        ><span class="text-section-label font-section-label">Settings</span>
+      </button>
+    </nav>
+    <script type="module" src="../WeatherLogic.js?v=10"></script>
+  </body>
+</html>
