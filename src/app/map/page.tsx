@@ -1,269 +1,499 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  Target,
-  ListFilter,
-  X,
-  Plus,
-  Minus,
-  LocateFixed,
-  TriangleAlert,
-  Users,
-} from "lucide-react";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Plus, ListFilter, X, AlertTriangle, Users, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/Header";
 
 type RiskLevel = "SAFE" | "MODERATE RISK" | "EVACUATE NOW";
 
-const DEFAULT_RISKS: Record<string, RiskLevel> = {
-  "Barangay Pag-asa": "SAFE",
-  "Barangay San Roque Marikina": "MODERATE RISK",
-  "Barangay Poblacion Leyte": "EVACUATE NOW",
-};
-
-function markerClasses(risk: RiskLevel) {
-  if (risk === "EVACUATE NOW") {
-    return {
-      dot: "h-6 w-6 animate-pulse rounded-full border-4 border-white/30 bg-[var(--terracotta)]",
-      dotShadow: "0 0 20px rgba(199,84,38,0.6)",
-      label:
-        "rounded bg-[var(--terracotta)] px-2 py-0.5 text-[11px] font-extrabold text-white shadow-lg",
-    };
-  }
-  if (risk === "MODERATE RISK") {
-    return {
-      dot: "h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--golden-yellow)]",
-      dotShadow: "0 0 12px rgba(255,212,0,0.5)",
-      label:
-        "rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--golden-yellow)]",
-    };
-  }
-  return {
-    dot: "h-4 w-4 rounded-full border-2 border-white/20 bg-[var(--leaf-green)]",
-    dotShadow: "0 0 12px rgba(135,216,158,0.5)",
-    label:
-      "rounded bg-[color:var(--background)]/60 px-1 text-[10px] font-bold text-[var(--leaf-green)]",
-  };
+interface MarkerData {
+  id: string;
+  name: string;
+  region: string;
+  lat: number;
+  lng: number;
+  risk: RiskLevel;
+  summary: string;
+  bulletin: string;
+  sources: string[];
+  confidence: string;
+  timestamp: string;
 }
 
-function bottomSheetRiskLabel(risk: RiskLevel) {
-  if (risk === "EVACUATE NOW") return "CRITICAL RISK";
-  if (risk === "MODERATE RISK") return "ADVISORY ACTIVE";
-  return "ALL CLEAR";
+const MARKERS: MarkerData[] = [
+  {
+    id: "pagasa-qc",
+    name: "Barangay Pag-asa",
+    region: "Quezon City, NCR",
+    lat: 14.6563,
+    lng: 121.0322,
+    risk: "SAFE",
+    summary: "Clear skies and stable conditions. No immediate threat to your community in the next 72 hours.",
+    bulletin:
+      "Current atmospheric conditions indicate no immediate threat of flooding or severe weather in Barangay Pag-asa. Satellite data shows clear skies with minimal cloud formation. Local sensors report stable water levels across all primary monitoring stations in Quezon City.",
+    sources: ["PAGASA", "NASA POWER", "NOAA"],
+    confidence: "HIGH",
+    timestamp: "2026-05-09T08:00:00+08:00",
+  },
+  {
+    id: "poblacion-makati",
+    name: "Barangay Poblacion",
+    region: "Makati City, NCR",
+    lat: 14.5547,
+    lng: 121.0244,
+    risk: "MODERATE RISK",
+    summary: "Heavy rainfall expected in 12 hours. Your community should prepare go-bags and avoid low-lying areas.",
+    bulletin:
+      "A sustained band of heavy rainfall is tracking toward the Makati watershed. Runoff is expected to increase rapidly, with a high likelihood of street-level flooding in low-lying zones and near-channel communities within the next 6–12 hours.",
+    sources: ["PAGASA", "NASA POWER", "NOAA"],
+    confidence: "MODERATE",
+    timestamp: "2026-05-09T08:00:00+08:00",
+  },
+  {
+    id: "sanjose-batangas",
+    name: "Barangay San Jose",
+    region: "Batangas City, Region IV-A",
+    lat: 13.7565,
+    lng: 121.0583,
+    risk: "SAFE",
+    summary: "Conditions are stable. No significant weather events are expected in your community for the next 72 hours.",
+    bulletin:
+      "Atmospheric data for Barangay San Jose shows stable pressure systems and low rainfall probability. Wind speeds remain within safe thresholds. No typhoon activity has been detected within 500 km of your community.",
+    sources: ["PAGASA", "NASA POWER"],
+    confidence: "HIGH",
+    timestamp: "2026-05-09T08:00:00+08:00",
+  },
+  {
+    id: "poblacion-leyte",
+    name: "Barangay Poblacion",
+    region: "Leyte, Region VIII",
+    lat: 11.2442,
+    lng: 124.9997,
+    risk: "EVACUATE NOW",
+    summary: "Typhoon landfall imminent. Your community must evacuate immediately to designated shelters.",
+    bulletin:
+      "Typhoon landfall is imminent in Barangay Poblacion. Forecast models indicate destructive winds exceeding 150 kph and rapid surge in rainfall intensity. Water levels have exceeded the 12.5 m threshold. If your community is within flood-prone areas, coastal zones, or near steep slopes, evacuate immediately to designated shelters and avoid all waterways.",
+    sources: ["PAGASA", "NASA POWER", "NOAA", "PHIVOLCS"],
+    confidence: "HIGH",
+    timestamp: "2026-05-09T08:00:00+08:00",
+  },
+  {
+    id: "pagasa-palawan",
+    name: "Barangay Pag-asa",
+    region: "Puerto Princesa, Palawan",
+    lat: 9.8395,
+    lng: 118.7367,
+    risk: "SAFE",
+    summary: "Fair weather prevails. Seas are calm and no weather disturbance is detected near your community.",
+    bulletin:
+      "Environmental monitoring for Barangay Pag-asa in Palawan shows favorable conditions. Sea surface temperatures are normal and no tropical disturbance has been detected in the vicinity. Your community can expect clear weather for the next 72 hours.",
+    sources: ["PAGASA", "NOAA"],
+    confidence: "HIGH",
+    timestamp: "2026-05-09T08:00:00+08:00",
+  },
+];
+
+const RISK_COLORS: Record<RiskLevel, string> = {
+  SAFE: "#4ADE80",
+  "MODERATE RISK": "#F59E0B",
+  "EVACUATE NOW": "#EF4444",
+};
+
+const REGIONS = ["All Regions", "NCR", "Region III", "Region IV-A", "Visayas", "Mindanao"];
+
+function riskBorderClass(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW") return "border-[var(--terracotta)]";
+  if (risk === "MODERATE RISK") return "border-[var(--golden-yellow)]";
+  return "border-[var(--leaf-green)]";
+}
+function riskTextClass(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW") return "text-[var(--terracotta)]";
+  if (risk === "MODERATE RISK") return "text-[var(--golden-yellow)]";
+  return "text-[var(--leaf-green)]";
+}
+function riskBgClass(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW") return "bg-[color:var(--terracotta)]/12";
+  if (risk === "MODERATE RISK") return "bg-[color:var(--golden-yellow)]/12";
+  return "bg-[color:var(--leaf-green)]/12";
+}
+function riskBadgeClass(risk: RiskLevel) {
+  if (risk === "EVACUATE NOW")
+    return "border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/20 text-[var(--terracotta)]";
+  if (risk === "MODERATE RISK")
+    return "border-[color:var(--golden-yellow)]/40 bg-[color:var(--golden-yellow)]/20 text-[var(--golden-yellow)]";
+  return "border-[color:var(--leaf-green)]/40 bg-[color:var(--leaf-green)]/20 text-[var(--leaf-green)]";
+}
+
+function formatTimestamp(iso: string) {
+  try {
+    return new Date(iso).toLocaleString("en-PH", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
 }
 
 export default function MapPage() {
-  const [risks, setRisks] =
-    useState<Record<string, RiskLevel>>(DEFAULT_RISKS);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
+
+  const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
+  // Keep last-shown marker so bottom sheet content doesn't vanish during close animation
+  const [displayMarker, setDisplayMarker] = useState<MarkerData | null>(null);
+  const [showFullReport, setShowFullReport] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [activeRegion, setActiveRegion] = useState("All Regions");
 
   useEffect(() => {
-    const fetchRisks = async () => {
+    if (selectedMarker) setDisplayMarker(selectedMarker);
+  }, [selectedMarker]);
+
+  // Initialise Mapbox map
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    let cancelled = false;
+
+    (async () => {
       try {
-        const res = await fetch("/api/barangay/risk");
-        const data = await res.json();
-        if (data.risks && Object.keys(data.risks).length > 0) {
-          setRisks((prev) => ({ ...prev, ...data.risks }));
+        const mapboxgl = (await import("mapbox-gl")).default;
+        if (cancelled || !mapContainerRef.current) return;
+
+        mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: "mapbox://styles/mapbox/dark-v11",
+          center: [122, 12],
+          zoom: 5,
+        });
+
+        mapRef.current = map;
+
+        // Add pulsing markers
+        for (const markerData of MARKERS) {
+          const color = RISK_COLORS[markerData.risk];
+
+          const wrapper = document.createElement("div");
+          wrapper.className = "kairago-marker";
+
+          const ring = document.createElement("div");
+          ring.className = "kairago-pulse-ring";
+          ring.style.borderColor = color;
+
+          const core = document.createElement("div");
+          core.className = "kairago-pulse-core";
+          core.style.backgroundColor = color;
+
+          wrapper.appendChild(ring);
+          wrapper.appendChild(core);
+
+          wrapper.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setSelectedMarker(markerData);
+            setShowFilter(false);
+          });
+
+          new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+            .setLngLat([markerData.lng, markerData.lat])
+            .addTo(map);
         }
       } catch {
-        // keep defaults on failure
+        // map init failed — silently ignore (e.g. no token)
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
       }
     };
-    fetchRisks();
   }, []);
 
-  const pagasaRisk = risks["Barangay Pag-asa"] ?? "SAFE";
-  const sanRoqueRisk = risks["Barangay San Roque Marikina"] ?? "MODERATE RISK";
-  const poblacionRisk = risks["Barangay Poblacion Leyte"] ?? "EVACUATE NOW";
+  const handleZoomIn = useCallback(() => {
+    mapRef.current?.zoomIn();
+  }, []);
 
-  const pagasa = markerClasses(pagasaRisk);
-  const sanRoque = markerClasses(sanRoqueRisk);
-  const poblacion = markerClasses(poblacionRisk);
+  const handleCloseBottomSheet = useCallback(() => {
+    setSelectedMarker(null);
+    setShowFullReport(false);
+  }, []);
 
-  const bottomRisk = poblacionRisk;
-  const bottomLabel = bottomSheetRiskLabel(bottomRisk);
-  const bottomBorderColor =
-    bottomRisk === "EVACUATE NOW"
-      ? "border-[var(--terracotta)]"
-      : bottomRisk === "MODERATE RISK"
-        ? "border-[var(--golden-yellow)]"
-        : "border-[var(--leaf-green)]";
-  const bottomTextColor =
-    bottomRisk === "EVACUATE NOW"
-      ? "text-[var(--terracotta)]"
-      : bottomRisk === "MODERATE RISK"
-        ? "text-[var(--golden-yellow)]"
-        : "text-[var(--leaf-green)]";
-  const bottomBgColor =
-    bottomRisk === "EVACUATE NOW"
-      ? "bg-[color:var(--terracotta)]/12"
-      : bottomRisk === "MODERATE RISK"
-        ? "bg-[color:var(--golden-yellow)]/12"
-        : "bg-[color:var(--leaf-green)]/12";
-  const bottomBadgeBorder =
-    bottomRisk === "EVACUATE NOW"
-      ? "border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/20 text-[var(--terracotta)]"
-      : bottomRisk === "MODERATE RISK"
-        ? "border-[color:var(--golden-yellow)]/40 bg-[color:var(--golden-yellow)]/20 text-[var(--golden-yellow)]"
-        : "border-[color:var(--leaf-green)]/40 bg-[color:var(--leaf-green)]/20 text-[var(--leaf-green)]";
+  const handleCloseFilter = useCallback(() => {
+    setShowFilter(false);
+  }, []);
+
+  const marker = displayMarker;
 
   return (
     <>
       <Header />
 
-      {/* Map Content & Overlays */}
-      <main className="map-bg relative mx-auto h-[calc(100vh-56px)] w-full max-w-[640px] overflow-hidden pb-[64px]">
-        {/* Currently Viewing Header */}
-        <div className="absolute left-0 right-0 top-3 z-20 px-4">
-          <div className="flex items-center justify-between rounded-xl border border-white/12 bg-[color:var(--surface-raised)]/90 p-3 shadow-2xl backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-[color:var(--primary)]/20 p-2">
-                <Target className="h-5 w-5 text-[var(--primary)]" />
-              </div>
-              <div>
-                <p className="mb-1 leading-none text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                  CURRENTLY VIEWING
-                </p>
-                <p className="text-[15px] font-bold text-white">
-                  Leyte Province, Region VIII
-                </p>
-              </div>
-            </div>
-            <button className="flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-white/10">
-              <ListFilter className="h-5 w-5 text-[var(--on-surface)]" />
-            </button>
+      <main
+        className="relative mx-auto w-full max-w-[640px] overflow-hidden"
+        style={{ height: "calc(100vh - 120px)" }}
+      >
+        {/* Mapbox GL container */}
+        <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+        {/* Floating + zoom button */}
+        <div className="absolute bottom-[210px] right-4 z-10 flex flex-col gap-2">
+          <button
+            onClick={handleZoomIn}
+            aria-label="Zoom in"
+            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/12 bg-[var(--surface-raised)] text-[var(--on-surface)] shadow-xl backdrop-blur-sm"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Filter button */}
+        <button
+          onClick={() => {
+            setShowFilter(true);
+            setSelectedMarker(null);
+          }}
+          aria-label="Filter regions"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-lg border border-white/12 bg-[var(--surface-raised)] text-[var(--on-surface)] shadow-xl backdrop-blur-sm"
+        >
+          <ListFilter className="h-5 w-5" />
+        </button>
+
+        {/* Backdrop overlay — closes whichever sheet is open */}
+        {(selectedMarker !== null || showFilter) && (
+          <div
+            className="absolute inset-0 z-20"
+            onClick={() => {
+              handleCloseBottomSheet();
+              handleCloseFilter();
+            }}
+          />
+        )}
+
+        {/* ── Marker info bottom sheet ─────────────────────────────────────── */}
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 z-30 rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-300",
+            selectedMarker ? "translate-y-0" : "translate-y-full pointer-events-none"
+          )}
+        >
+          {/* Drag handle */}
+          <div className="flex justify-center py-3">
+            <div className="h-1 w-10 rounded-full bg-white/20" />
           </div>
 
-          {/* Filter Chips */}
-          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-2">
-            {["Pag-asa", "San Roque", "Poblacion"].map((chip) => (
-              <div
-                key={chip}
-                className="flex shrink-0 items-center gap-2 rounded-full border border-white/20 bg-[var(--surface-raised)] px-3 py-1.5"
-              >
-                <span className="text-[11px] font-medium text-[var(--on-surface)]">
-                  {chip}
-                </span>
-                <X className="h-[14px] w-[14px] text-[var(--text-muted)]" />
+          {marker && (
+            <div className="px-6 pb-8">
+              {/* Header row */}
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                    {marker.region}
+                  </p>
+                  <h2 className="text-[26px] font-bold leading-tight text-white uppercase">
+                    {marker.name}
+                  </h2>
+                </div>
+                <div
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1",
+                    riskBadgeClass(marker.risk)
+                  )}
+                >
+                  <span className="text-[11px] font-medium uppercase">{marker.risk}</span>
+                </div>
               </div>
+
+              {/* Bulletin summary */}
+              <div
+                className={cn(
+                  "mb-5 rounded-r-lg border-l-4 p-4",
+                  riskBorderClass(marker.risk),
+                  riskBgClass(marker.risk)
+                )}
+              >
+                <div className="mb-2 flex items-center gap-2">
+                  <AlertTriangle className={cn("h-4 w-4 shrink-0", riskTextClass(marker.risk))} />
+                  <span className={cn("text-[14px] font-bold", riskTextClass(marker.risk))}>
+                    {marker.risk}
+                  </span>
+                </div>
+                <p className="text-[14px] leading-[1.5] text-[color:var(--on-surface)]/90">
+                  {marker.summary}
+                </p>
+              </div>
+
+              {/* Data row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[var(--surface-raised)]">
+                    <Users className="h-5 w-5 text-[var(--text-muted)]" />
+                  </div>
+                  <div>
+                    <span className="block text-[15px] font-medium text-white">
+                      1,240 PEOPLE AFFECTED
+                    </span>
+                    <span className="block text-[10px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      PILOT DATA
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFullReport(true)}
+                  className="rounded-lg border border-white/12 bg-[var(--surface-raised)] px-4 py-2 text-[13px] font-medium text-[var(--on-surface)] transition-colors hover:bg-white/10"
+                >
+                  VIEW FULL REPORT
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Filter bottom sheet ──────────────────────────────────────────── */}
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 z-30 rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-300",
+            showFilter ? "translate-y-0" : "translate-y-full pointer-events-none"
+          )}
+        >
+          <div className="flex items-center justify-between px-6 py-4">
+            <h3 className="text-[15px] font-bold text-white">Filter by Region</h3>
+            <button
+              onClick={handleCloseFilter}
+              aria-label="Close filter"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-white/10"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="px-6 pb-8 flex flex-col gap-1">
+            {REGIONS.map((region) => (
+              <button
+                key={region}
+                onClick={() => {
+                  setActiveRegion(region);
+                  setShowFilter(false);
+                }}
+                className={cn(
+                  "flex items-center justify-between rounded-lg px-4 py-3 text-[14px] font-medium transition-colors",
+                  activeRegion === region
+                    ? "bg-[color:var(--leaf-green)]/15 text-[var(--leaf-green)]"
+                    : "text-[var(--on-surface)] hover:bg-white/5"
+                )}
+              >
+                {region}
+                {activeRegion === region && (
+                  <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
+                )}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Map Visual */}
-        <div className="absolute inset-0 z-0">
-          <img
-            className="h-full w-full object-cover opacity-60"
-            alt="A specialized digital satellite map of Leyte Province with a dark aesthetic."
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDowZc37FD2lHsL6zaU5XwqZO4x2IB7Ux4dR6XijJKL3cKumHJKWYcnuOPRdLCLQ5oNLpdhMTmm0auQSy_DS7XtLrJkm0r7YwddShbrlvbyrDOE50LcOutmwdl4LrA0bNkez5xp9IijMmBIPVa2X1awl4nSK9k3q0HZfA9XbllYWxdyGsU7uLDZf9Omj3N8NVU8enJBPTb7JLZbPpvDoSot-nJNRvrL7AnNUgoiRILZ5Qrs1Ci98FsNiA9dPeBXVDd4sTULXQfjuhAE"
-          />
-
-          {/* Pag-asa marker */}
-          <div className="absolute left-[45%] top-[35%] flex flex-col items-center">
+        {/* ── Full report modal ────────────────────────────────────────────── */}
+        {showFullReport && marker && (
+          <div
+            className="absolute inset-0 z-40 flex items-end bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowFullReport(false)}
+          >
             <div
-              className={pagasa.dot}
-              style={{ boxShadow: pagasa.dotShadow }}
-            />
-            <span className={cn("mt-1", pagasa.label)}>PAG-ASA</span>
-          </div>
-
-          {/* San Roque marker */}
-          <div className="absolute left-[30%] top-[55%] flex flex-col items-center">
-            <div
-              className={sanRoque.dot}
-              style={{ boxShadow: sanRoque.dotShadow }}
-            />
-            <span className={cn("mt-1", sanRoque.label)}>SAN ROQUE</span>
-          </div>
-
-          {/* Poblacion marker */}
-          <div className="absolute left-[55%] top-[50%] flex flex-col items-center">
-            <div
-              className={poblacion.dot}
-              style={{ boxShadow: poblacion.dotShadow }}
-            />
-            <span className={cn("mt-1", poblacion.label)}>POBLACION</span>
-          </div>
-        </div>
-
-        {/* Floating Action Buttons */}
-        <div className="absolute bottom-[40%] right-4 z-20 flex flex-col gap-2">
-          <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/12 bg-[var(--surface-raised)] text-[var(--on-surface)] shadow-xl">
-            <Plus className="h-5 w-5" />
-          </button>
-          <button className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/12 bg-[var(--surface-raised)] text-[var(--on-surface)] shadow-xl">
-            <Minus className="h-5 w-5" />
-          </button>
-          <button className="mt-2 flex h-11 w-11 items-center justify-center rounded-lg border border-white/12 bg-[var(--surface-raised)] text-[var(--primary)] shadow-xl">
-            <LocateFixed className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Bottom Sheet */}
-        <div className="absolute bottom-0 left-0 right-0 z-30 translate-y-0 transform rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-300">
-          <div className="flex justify-center py-3">
-            <div className="h-1 w-10 rounded-full bg-white/20" />
-          </div>
-          <div className="px-6 pb-10">
-            <div className="mb-4 flex items-start justify-between">
-              <div>
-                <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
-                  CURRENT LOCATION
-                </p>
-                <h2 className="text-[28px] font-bold leading-tight text-white">
-                  BARANGAY POBLACION
-                </h2>
-              </div>
-              <div
-                className={cn(
-                  "shrink-0 rounded-full border px-3 py-1",
-                  bottomBadgeBorder
-                )}
-              >
-                <span className="text-[11px] font-medium uppercase">
-                  {bottomLabel}
-                </span>
-              </div>
-            </div>
-
-            {/* Risk Bulletin Card */}
-            <div
-              className={cn(
-                "mb-6 rounded-r-lg border-l-4 p-4",
-                bottomBorderColor,
-                bottomBgColor
-              )}
+              className="w-full rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_40px_rgba(0,0,0,0.7)] max-h-[85%] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-2 flex items-center gap-2">
-                <TriangleAlert className={cn("h-5 w-5", bottomTextColor)} />
-                <span className={cn("text-[18px] font-bold", bottomTextColor)}>
-                  {poblacionRisk}
-                </span>
+              {/* Handle */}
+              <div className="flex justify-center py-3">
+                <div className="h-1 w-10 rounded-full bg-white/20" />
               </div>
-              <p className="text-[15px] font-normal leading-[1.5] text-[color:var(--on-surface)]/90">
-                Water levels have exceeded the{" "}
-                <span className="font-bold text-white">12.5m threshold</span>.
-                Immediate flash flooding is imminent in low-lying residential
-                sectors.
-              </p>
-            </div>
 
-            {/* Data Row */}
-            <div className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/8 bg-[var(--surface-raised)]">
-                  <Users className="h-5 w-5 text-[var(--text-muted)]" />
+              <div className="px-6 pb-10">
+                {/* Title */}
+                <div className="mb-5 flex items-start justify-between">
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      FULL BULLETIN REPORT
+                    </p>
+                    <h2 className="text-[22px] font-bold text-white uppercase">{marker.name}</h2>
+                    <p className="text-[13px] text-[var(--text-muted)]">{marker.region}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowFullReport(false)}
+                    aria-label="Close report"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-white/10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <span className="text-[15px] font-medium text-white">
-                  1,240 PEOPLE AFFECTED
-                </span>
+
+                {/* Risk badge */}
+                <div
+                  className={cn(
+                    "mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1",
+                    riskBadgeClass(marker.risk)
+                  )}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em]">
+                    {marker.risk}
+                  </span>
+                </div>
+
+                {/* Bulletin text */}
+                <div className="mb-5">
+                  <p className="mb-2 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                    BULLETIN TEXT
+                  </p>
+                  <p className="text-[15px] leading-[1.6] text-[var(--text-body)]">
+                    {marker.bulletin}
+                  </p>
+                </div>
+
+                {/* Confidence */}
+                <div className="mb-5 flex items-center gap-3 rounded-lg border border-white/8 bg-[var(--surface-raised)] px-4 py-3">
+                  <div>
+                    <p className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                      CONFIDENCE SCORE
+                    </p>
+                    <p className="text-[17px] font-bold text-white">{marker.confidence}</p>
+                  </div>
+                </div>
+
+                {/* Data sources */}
+                <div className="mb-5">
+                  <p className="mb-2 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                    DATA SOURCES
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {marker.sources.map((src) => (
+                      <div
+                        key={src}
+                        className="rounded border border-white/10 bg-white/5 px-3 py-1"
+                      >
+                        <span className="text-[11px] font-bold text-[var(--text-muted)]">{src}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Timestamp */}
+                <div>
+                  <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                    GENERATED AT
+                  </p>
+                  <p className="text-[13px] text-[var(--on-surface)]">
+                    {formatTimestamp(marker.timestamp)}
+                  </p>
+                </div>
               </div>
-              <button className="rounded-lg border border-white/12 bg-[var(--surface-raised)] px-4 py-2 text-[13px] font-medium text-[var(--on-surface)]">
-                VIEW FULL REPORT
-              </button>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </>
   );

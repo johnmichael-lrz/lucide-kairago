@@ -228,3 +228,8 @@ html.large-text {
     @apply font-sans;
   }
 }
+
+.kairago-marker { position: relative; width: 24px; height: 24px; cursor: pointer; }
+.kairago-pulse-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid; animation: pulse-ring 1.5s ease-out infinite; }
+.kairago-pulse-core { position: absolute; inset: 4px; border-radius: 50%; }
+@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }

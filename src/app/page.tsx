@@ -17,12 +17,15 @@ import {
   Cloud,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  BARANGAYS,
-  searchBarangays,
-  type BarangayLocation,
-} from "@/lib/barangay-geocoding";
 import { type Bulletin } from "@/lib/bulletin-schema";
+
+type MapboxFeature = {
+  id: string;
+  text: string;
+  place_name: string;
+  center: [number, number];
+  context?: Array<{ id: string; text: string }>;
+};
 import { Toast } from "@/components/toast";
 import { Header } from "@/components/Header";
 import {
@@ -116,9 +119,9 @@ export default function Home() {
   const [scenario, setScenario] = useState<Scenario>("safe");
   const [isSpeakingBulletin, setIsSpeakingBulletin] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Copied to clipboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLocating, setIsLocating] = useState(false);
-  const [locationErrorVisible, setLocationErrorVisible] = useState(false);
   const [landfallEtaMs, setLandfallEtaMs] = useState<number | null>(null);
 
   // Phase 7 state
@@ -128,7 +131,7 @@ export default function Home() {
   const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [healthStatus, setHealthStatus] = useState<Record<string, string>>({});
-  const [suggestions, setSuggestions] = useState<BarangayLocation[]>([]);
+  const [suggestions, setSuggestions] = useState<MapboxFeature[]>([]);
   const [savedBarangays, setSavedBarangays] = useState<KairagoBarangays>({
     items: [],
   });
@@ -201,12 +204,6 @@ export default function Home() {
     setIsSpeakingBulletin(false);
   }, [scenario]);
 
-  // Dismiss location error after 3s
-  useEffect(() => {
-    if (!locationErrorVisible) return;
-    const id = window.setTimeout(() => setLocationErrorVisible(false), 3000);
-    return () => window.clearTimeout(id);
-  }, [locationErrorVisible]);
 
   // Countdown timer for evacuate scenario
   const landfallReady = landfallEtaMs !== null;
@@ -251,16 +248,32 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, []);
 
-  // Autocomplete suggestions
+  // Autocomplete suggestions via Mapbox Geocoding API
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
-    const results = searchBarangays(searchQuery).slice(0, 50);
-    setSuggestions(results);
-    setShowSuggestions(results.length > 0);
+    const controller = new AbortController();
+    const timerId = window.setTimeout(async () => {
+      try {
+        const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+        if (!token) return;
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery)}.json?country=PH&types=locality,neighborhood,place&access_token=${token}&limit=6`;
+        const res = await fetch(url, { signal: controller.signal });
+        const data = await res.json();
+        const features: MapboxFeature[] = data.features ?? [];
+        setSuggestions(features.slice(0, 6));
+        setShowSuggestions(features.length > 0);
+      } catch {
+        // aborted or network error — ignore
+      }
+    }, 300);
+    return () => {
+      window.clearTimeout(timerId);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   // Close suggestions on outside click
@@ -378,54 +391,41 @@ export default function Home() {
   const handleUseMyLocation = useCallback(() => {
     if (typeof window === "undefined") return;
     if (!navigator.geolocation) {
-      setLocationErrorVisible(true);
+      setToastMessage("Location access denied. Please search your barangay manually.");
+      setToastVisible(true);
       return;
     }
     setIsLocating(true);
-    setLocationErrorVisible(false);
-
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    const distKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const R = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(a));
-    };
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Reverse geocode (server-side to avoid CORS; required by spec)
         try {
-          await fetch(`/api/geocode/reverse?lat=${latitude}&lng=${longitude}`);
-        } catch {
-          // non-fatal
-        }
-
-        // Find nearest barangay in the dataset
-        let nearest = BARANGAYS[0];
-        let nearestDist = Infinity;
-        for (const cur of BARANGAYS) {
-          const d = distKm(latitude, longitude, cur.latitude, cur.longitude);
-          if (d < nearestDist) {
-            nearestDist = d;
-            nearest = cur;
+          const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+          if (!token) throw new Error("No token");
+          const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=locality,neighborhood&access_token=${token}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          const feature: MapboxFeature | undefined = data.features?.[0];
+          if (feature) {
+            const name = feature.text;
+            setSearchQuery(name);
+            addSavedBarangay(name);
+            runAgentPipeline(name, { lat: latitude, lng: longitude });
           }
+        } catch {
+          // non-fatal: still run pipeline with coordinates only
+          runAgentPipeline("", { lat: latitude, lng: longitude });
+        } finally {
+          setIsLocating(false);
         }
-
-        setSearchQuery(nearest.name);
-        addSavedBarangay(nearest.name);
-        setIsLocating(false);
-        runAgentPipeline(nearest.name, { lat: latitude, lng: longitude });
       },
       () => {
         setIsLocating(false);
-        setLocationErrorVisible(true);
+        setToastMessage("Location access denied. Please search your barangay manually.");
+        setToastVisible(true);
       },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [runAgentPipeline, addSavedBarangay]);
 
@@ -538,6 +538,7 @@ export default function Home() {
     }
     try {
       await copyTextToClipboard(`${title}\n\n${text}\n\n${url}`);
+      setToastMessage("Copied to clipboard");
       setToastVisible(true);
     } catch {
       // no supported copy path
@@ -576,7 +577,7 @@ export default function Home() {
   return (
     <>
       <Toast
-        message="Copied to clipboard"
+        message={toastMessage}
         visible={toastVisible}
         onHide={() => setToastVisible(false)}
       />
@@ -654,30 +655,36 @@ export default function Home() {
                 ref={suggestionsRef}
                 className="absolute left-0 right-0 top-full z-40 mt-1 max-h-[288px] overflow-y-auto rounded-lg border border-white/12 bg-[var(--surface-raised)] shadow-xl"
               >
-                {suggestions.slice(0, 100).map((s) => (
-                  <button
-                    key={`${s.name}-${s.municipality}-${s.province}`}
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearchQuery(s.name);
-                      addSavedBarangay(s.name);
-                      handleSearch(s.name, {
-                        lat: s.latitude,
-                        lng: s.longitude,
-                      });
-                    }}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-[14px] text-[var(--on-surface)] transition-colors hover:bg-white/5"
-                  >
-                    <MapPin className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
-                    <span className="flex-1">
-                      <span className="block">{s.name}</span>
-                      <span className="block text-[12px] text-[var(--text-muted)]">
-                        {s.municipality}, {s.province}
+                {suggestions.map((s) => {
+                  const region = s.context?.find(
+                    (c) => c.id.startsWith("region") || c.id.startsWith("place")
+                  )?.text ?? "";
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const name = s.text;
+                        setSearchQuery(name);
+                        addSavedBarangay(name);
+                        handleSearch(name, {
+                          lat: s.center[1],
+                          lng: s.center[0],
+                        });
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-[14px] text-[var(--on-surface)] transition-colors hover:bg-white/5"
+                    >
+                      <MapPin className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                      <span className="flex-1">
+                        <span className="block">{s.text}</span>
+                        <span className="block text-[12px] text-[var(--text-muted)]">
+                          {region}
+                        </span>
                       </span>
-                    </span>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -701,11 +708,6 @@ export default function Home() {
               )}
               {isLocating ? "LOCATING…" : "USE MY LOCATION"}
             </button>
-            {locationErrorVisible && (
-              <p className="text-[12px] text-[var(--terracotta)]" role="status">
-                Location access denied. Please search manually
-              </p>
-            )}
           </div>
         </div>
 
