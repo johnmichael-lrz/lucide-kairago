@@ -67,7 +67,7 @@ const BASE_MARKERS: MarkerData[] = [
     lng: 121.0244,
     risk: "MODERATE RISK",
     summary: "Heavy rainfall expected in 12 hours. Prepare go-bags and avoid low-lying areas.",
-    bulletin: "A sustained band of heavy rainfall is tracking toward the Makati watershed. Runoff is expected to increase rapidly, with a high likelihood of street-level flooding in low-lying zones and near-channel communities within the next 6–12 hours.",
+    bulletin: "A sustained band of heavy rainfall is tracking toward the Makati watershed. Runoff is expected to increase rapidly, with a high likelihood of street-level flooding in low-lying zones and near-channel communities within the next 6-12 hours.",
     sources: ["PAGASA", "NASA POWER", "NOAA"],
     confidence: "MODERATE",
     timestamp: new Date().toISOString(),
@@ -172,7 +172,6 @@ function getRiskFromApi(barangayName: string, apiRisks: Record<string, string>):
   const found = apiRisks[barangayName];
   if (found === "EVACUATE NOW") return "EVACUATE NOW";
   if (found === "MODERATE RISK") return "MODERATE RISK";
-  if (found === "SAFE") return "SAFE";
   return "SAFE";
 }
 
@@ -194,7 +193,6 @@ export default function MapPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<MapboxFeature[]>([]);
   const [isLocating, setIsLocating] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [apiRisks, setApiRisks] = useState<Record<string, string>>({});
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -202,7 +200,6 @@ export default function MapPage() {
     if (selectedMarker) setDisplayMarker(selectedMarker);
   }, [selectedMarker]);
 
-  // Fetch real risk levels from API
   useEffect(() => {
     const fetchRisks = async () => {
       try {
@@ -211,26 +208,23 @@ export default function MapPage() {
         if (data.risks) {
           setApiRisks(data.risks);
           setLastUpdated(new Date());
-          // Update markers with real risk levels
           setMarkers(prev =>
             prev.map(m => ({
               ...m,
-              risk: getRiskFromApi(m.name, data.risks) ?? m.risk,
+              risk: getRiskFromApi(m.name, data.risks),
               timestamp: new Date().toISOString(),
             }))
           );
         }
       } catch {
-        // keep seeded data on error
+        // keep seeded data
       }
     };
     fetchRisks();
-    // Refresh every 5 minutes
     const id = setInterval(fetchRisks, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Update marker colors on map when risk levels change
   useEffect(() => {
     if (!mapRef.current) return;
     markersRef.current.forEach((m, i) => {
@@ -245,7 +239,6 @@ export default function MapPage() {
     });
   }, [markers]);
 
-  // Mapbox search suggestions
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchSuggestions([]);
@@ -270,7 +263,6 @@ export default function MapPage() {
     };
   }, [searchQuery]);
 
-  // Initialize Mapbox map
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     let cancelled = false;
@@ -292,7 +284,6 @@ export default function MapPage() {
         mapRef.current = map;
 
         map.on("load", () => {
-          // Add heatmap source and layer
           map.addSource("risk-heatmap", {
             type: "geojson",
             data: {
@@ -328,40 +319,33 @@ export default function MapPage() {
           });
         });
 
-        // Add markers
         const newMarkers: any[] = [];
         for (const markerData of BASE_MARKERS) {
           const color = RISK_COLORS[markerData.risk];
           const wrapper = document.createElement("div");
           wrapper.className = "kairago-marker";
-
           const ring = document.createElement("div");
           ring.className = "kairago-pulse-ring";
           ring.style.borderColor = color;
-
           const core = document.createElement("div");
           core.className = "kairago-pulse-core";
           core.style.backgroundColor = color;
-
           wrapper.appendChild(ring);
           wrapper.appendChild(core);
-
           wrapper.addEventListener("click", (e) => {
             e.stopPropagation();
             setSelectedMarker(markerData);
             setShowFilter(false);
             setShowSearch(false);
           });
-
-          const m = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
+          const mk = new mapboxgl.Marker({ element: wrapper, anchor: "center" })
             .setLngLat([markerData.lng, markerData.lat])
             .addTo(map);
-          newMarkers.push(m);
+          newMarkers.push(mk);
         }
         markersRef.current = newMarkers;
-
       } catch {
-        // silently ignore
+        // ignore
       }
     })();
 
@@ -374,7 +358,6 @@ export default function MapPage() {
     };
   }, []);
 
-  // Handle heatmap toggle
   useEffect(() => {
     if (!mapRef.current) return;
     try {
@@ -384,7 +367,7 @@ export default function MapPage() {
         showHeatmap ? "visible" : "none"
       );
     } catch {
-      // layer not ready yet
+      // layer not ready
     }
   }, [showHeatmap]);
 
@@ -398,34 +381,14 @@ export default function MapPage() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-        mapRef.current?.flyTo({
-          center: [longitude, latitude],
-          zoom: 13,
-          duration: 1500,
-        });
-
-        // Try to fetch risk for user's location
+        mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 13, duration: 1500 });
         try {
-          const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-          if (!token) return;
-          const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=locality,neighborhood&access_token=${token}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          const feature = data.features?.[0];
-          if (feature) {
-            // Add a user location marker
-            const mapboxgl = (await import("mapbox-gl")).default;
-            const el = document.createElement("div");
-            el.style.cssText = `
-              width: 20px; height: 20px; border-radius: 50%;
-              background: #3B82F6; border: 3px solid white;
-              box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
-            `;
-            new mapboxgl.Marker({ element: el })
-              .setLngLat([longitude, latitude])
-              .addTo(mapRef.current);
-          }
+          const mapboxgl = (await import("mapbox-gl")).default;
+          const el = document.createElement("div");
+          el.style.cssText = "width:20px;height:20px;border-radius:50%;background:#3B82F6;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.3);";
+          new mapboxgl.Marker({ element: el })
+            .setLngLat([longitude, latitude])
+            .addTo(mapRef.current);
         } catch {
           // ignore
         } finally {
@@ -442,11 +405,7 @@ export default function MapPage() {
     setShowFilter(false);
     const bounds = REGION_BOUNDS[region];
     if (bounds && mapRef.current) {
-      mapRef.current.flyTo({
-        center: bounds.center,
-        zoom: bounds.zoom,
-        duration: 1200,
-      });
+      mapRef.current.flyTo({ center: bounds.center, zoom: bounds.zoom, duration: 1200 });
     }
   }, []);
 
@@ -454,13 +413,8 @@ export default function MapPage() {
     setSearchQuery(feature.text);
     setSearchSuggestions([]);
     setShowSearch(false);
-    mapRef.current?.flyTo({
-      center: feature.center,
-      zoom: 13,
-      duration: 1200,
-    });
+    mapRef.current?.flyTo({ center: feature.center, zoom: 13, duration: 1200 });
 
-    // Generate a bulletin for this searched location
     try {
       const res = await fetch("/api/bulletin/generate", {
         method: "POST",
@@ -479,7 +433,7 @@ export default function MapPage() {
           lat: feature.center[1],
           lng: feature.center[0],
           risk: data.risk_level as RiskLevel,
-          summary: data.bulletin_text?.slice(0, 120) + "..." ?? "Risk assessment generated.",
+          summary: (data.bulletin_text ?? "Risk assessment generated.").slice(0, 120) + "...",
           bulletin: data.bulletin_text ?? "",
           sources: ["PAGASA", "NASA POWER", "NOAA"],
           confidence: data.confidence ?? "MODERATE",
@@ -489,7 +443,6 @@ export default function MapPage() {
         setMarkers(prev => [newMarker, ...prev]);
         setSelectedMarker(newMarker);
 
-        // Add marker to map
         const mapboxgl = (await import("mapbox-gl")).default;
         const color = RISK_COLORS[newMarker.risk];
         const wrapper = document.createElement("div");
@@ -522,20 +475,17 @@ export default function MapPage() {
   return (
     <>
       <Header />
-
       <main
         className="relative mx-auto w-full max-w-[640px] overflow-hidden"
         style={{ height: "calc(100vh - 120px)", overflow: "hidden", background: "#0D1F15" }}
       >
-        {/* Mapbox GL container */}
         <div
           ref={mapContainerRef}
           style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", minHeight: "400px" }}
         />
 
-        {/* ── Top controls row ── */}
+        {/* Top controls */}
         <div className="absolute left-4 right-4 top-4 z-10 flex items-center gap-2">
-          {/* Search bar */}
           <div className="relative flex-1">
             <button
               onClick={() => setShowSearch(!showSearch)}
@@ -577,7 +527,6 @@ export default function MapPage() {
             )}
           </div>
 
-          {/* Filter button */}
           <button
             onClick={() => { setShowFilter(true); setSelectedMarker(null); setShowSearch(false); }}
             aria-label="Filter regions"
@@ -587,9 +536,8 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* ── Right side controls ── */}
+        {/* Right controls */}
         <div className="absolute bottom-[220px] right-4 z-10 flex flex-col gap-2">
-          {/* Zoom in */}
           <button
             onClick={handleZoomIn}
             aria-label="Zoom in"
@@ -597,8 +545,6 @@ export default function MapPage() {
           >
             <Plus className="h-5 w-5" />
           </button>
-
-          {/* Use my location */}
           <button
             onClick={handleUseMyLocation}
             aria-label="Use my location"
@@ -609,8 +555,6 @@ export default function MapPage() {
           >
             <Navigation className={cn("h-5 w-5", isLocating && "animate-pulse")} />
           </button>
-
-          {/* Heatmap toggle */}
           <button
             onClick={() => setShowHeatmap(!showHeatmap)}
             aria-label="Toggle heatmap"
@@ -625,7 +569,7 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* ── Risk legend ── */}
+        {/* Risk legend */}
         <div className="absolute bottom-[220px] left-4 z-10 flex flex-col gap-1.5 rounded-lg border border-white/12 bg-[var(--surface-raised)] px-3 py-2.5 shadow-xl backdrop-blur-sm">
           <p className="text-[9px] font-bold tracking-[0.12em] text-[var(--text-muted)]">RISK LEVEL</p>
           {(["SAFE", "MODERATE RISK", "EVACUATE NOW"] as RiskLevel[]).map(risk => (
@@ -639,7 +583,7 @@ export default function MapPage() {
           </p>
         </div>
 
-        {/* Backdrop overlay */}
+        {/* Backdrop */}
         {(selectedMarker !== null || showFilter || showSearch) && (
           <div
             className="absolute inset-0 z-20"
@@ -651,7 +595,7 @@ export default function MapPage() {
           />
         )}
 
-        {/* ── Marker info bottom sheet ── */}
+        {/* Marker bottom sheet */}
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 z-30 rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-300",
@@ -661,7 +605,6 @@ export default function MapPage() {
           <div className="flex justify-center py-3">
             <div className="h-1 w-10 rounded-full bg-white/20" />
           </div>
-
           {marker && (
             <div className="px-6 pb-6">
               <div className="mb-3 flex items-start justify-between">
@@ -677,7 +620,6 @@ export default function MapPage() {
                   <span className="text-[10px] font-medium uppercase">{marker.risk}</span>
                 </div>
               </div>
-
               <div className={cn("mb-4 rounded-r-lg border-l-4 p-3", riskBorderClass(marker.risk), riskBgClass(marker.risk))}>
                 <div className="mb-1.5 flex items-center gap-2">
                   <AlertTriangle className={cn("h-3.5 w-3.5 shrink-0", riskTextClass(marker.risk))} />
@@ -685,7 +627,6 @@ export default function MapPage() {
                 </div>
                 <p className="text-[13px] leading-[1.5] text-[color:var(--on-surface)]/90">{marker.summary}</p>
               </div>
-
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/8 bg-[var(--surface-raised)]">
@@ -711,7 +652,7 @@ export default function MapPage() {
           )}
         </div>
 
-        {/* ── Filter bottom sheet ── */}
+        {/* Filter bottom sheet */}
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 z-30 rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-transform duration-300",
@@ -738,4 +679,75 @@ export default function MapPage() {
                     ? "bg-[color:var(--leaf-green)]/15 text-[var(--leaf-green)]"
                     : "text-[var(--on-surface)] hover:bg-white/5"
                 )}
-              ></button>
+              >
+                {region}
+                {activeRegion === region && <ChevronDown className="h-4 w-4 rotate-[-90deg]" />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Full report modal */}
+        {showFullReport && marker && (
+          <div
+            className="absolute inset-0 z-40 flex items-end bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowFullReport(false)}
+          >
+            <div
+              className="w-full rounded-t-[24px] border-t border-white/12 bg-[var(--surface)] shadow-[0_-8px_40px_rgba(0,0,0,0.7)] max-h-[85%] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-center py-3">
+                <div className="h-1 w-10 rounded-full bg-white/20" />
+              </div>
+              <div className="px-6 pb-10">
+                <div className="mb-4 flex items-start justify-between">
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">FULL BULLETIN REPORT</p>
+                    <h2 className="text-[20px] font-bold text-white uppercase">{marker.name}</h2>
+                    <p className="text-[12px] text-[var(--text-muted)]">{marker.region}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowFullReport(false)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-white/10"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className={cn("mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1", riskBadgeClass(marker.risk))}>
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em]">{marker.risk}</span>
+                </div>
+                <div className="mb-4">
+                  <p className="mb-1.5 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">BULLETIN TEXT</p>
+                  <p className="text-[14px] leading-[1.6] text-[var(--text-body)]">{marker.bulletin}</p>
+                </div>
+                <div className="mb-4 flex items-center gap-3 rounded-lg border border-white/8 bg-[var(--surface-raised)] px-4 py-3">
+                  <Wind className="h-4 w-4 text-[var(--text-muted)]" />
+                  <div>
+                    <p className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">CONFIDENCE SCORE</p>
+                    <p className="text-[15px] font-bold text-white">{marker.confidence}</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <p className="mb-1.5 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">DATA SOURCES</p>
+                  <div className="flex flex-wrap gap-2">
+                    {marker.sources.map(src => (
+                      <div key={src} className="rounded border border-white/10 bg-white/5 px-2.5 py-1">
+                        <span className="text-[10px] font-bold text-[var(--text-muted)]">{src}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">GENERATED AT</p>
+                  <p className="text-[13px] text-[var(--on-surface)]">{formatTimestamp(marker.timestamp)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
