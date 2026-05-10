@@ -16,6 +16,18 @@ export type PipelineEvent =
   | { type: 'bulletin'; data: Bulletin; barangay: string; environmental_data: NormalizedEnvironmentalData }
   | { type: 'error'; message: string }
 
+export interface OpenMeteoForecast {
+  hourly: {
+    time: string[]
+    temperature_2m: number[]
+    precipitation: number[]
+    precipitation_probability: number[]
+    windspeed_10m: number[]
+    relativehumidity_2m: number[]
+    weathercode: number[]
+  }
+}
+
 async function fetchNasaPower(
   lat: number,
   lng: number,
@@ -85,6 +97,89 @@ async function fetchNoaa(
   }
 }
 
+export async function fetchOpenMeteo(
+  lat: number,
+  lng: number,
+  barangay: string,
+): Promise<{ normalized: NormalizedEnvironmentalData; forecast: OpenMeteoForecast | null }> {
+  const url = new URL('https://api.open-meteo.com/v1/forecast')
+  url.searchParams.set('latitude', String(lat))
+  url.searchParams.set('longitude', String(lng))
+  url.searchParams.set('hourly', 'temperature_2m,precipitation,precipitation_probability,windspeed_10m,relativehumidity_2m,weathercode')
+  url.searchParams.set('forecast_days', '3')
+  url.searchParams.set('timezone', 'Asia/Manila')
+  url.searchParams.set('windspeed_unit', 'kmh')
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10_000)
+
+  try {
+    const res = await fetch(url.toString(), {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    })
+    clearTimeout(timeout)
+    if (!res.ok) throw new Error(`Open-Meteo ${res.status}`)
+
+    const data: OpenMeteoForecast = await res.json()
+    const h = data.hourly
+
+    // Use the next 6 hours average for current conditions
+    const slice = 6
+    const avg = (arr: number[]) =>
+      arr.slice(0, slice).reduce((a, b) => a + b, 0) / Math.min(slice, arr.length)
+
+    const avgRainfall = avg(h.precipitation)
+    const avgWind = avg(h.windspeed_10m)
+    const avgHumidity = avg(h.relativehumidity_2m)
+    const avgTemp = avg(h.temperature_2m)
+    const maxPrecipProb = Math.max(...h.precipitation_probability.slice(0, 24))
+
+    // Build a normalized data object from Open-Meteo
+    const normalized: NormalizedEnvironmentalData = {
+      barangay_name: barangay,
+      latitude: lat,
+      longitude: lng,
+      timestamp: new Date().toISOString(),
+      rainfall_mm_per_hour: Math.round(avgRainfall * 10) / 10,
+      wind_speed_kph: Math.round(avgWind * 10) / 10,
+      humidity_percentage: Math.round(avgHumidity),
+      temperature_celsius: Math.round(avgTemp * 10) / 10,
+      storm_surge_risk: maxPrecipProb > 80 ? 'HIGH' : maxPrecipProb > 50 ? 'MODERATE' : 'LOW',
+      data_sources: ['Open-Meteo'],
+      raw: data,
+    }
+
+    return { normalized, forecast: data }
+  } catch {
+    clearTimeout(timeout)
+    return {
+      normalized: {
+        ...fallbackEnvironmentalData(barangay, lat, lng),
+        data_sources: ['Open-Meteo (fallback)'],
+      },
+      forecast: null,
+    }
+  }
+}
+
+function buildForecastSummary(forecast: OpenMeteoForecast | null): string {
+  if (!forecast) return ''
+  const h = forecast.hourly
+  const next24 = h.time.slice(0, 24).map((time, i) => ({
+    time,
+    temp: h.temperature_2m[i],
+    rain: h.precipitation[i],
+    rainProb: h.precipitation_probability[i],
+    wind: h.windspeed_10m[i],
+  }))
+  const summary = next24
+    .filter((_, i) => i % 6 === 0)
+    .map(h => `${h.time}: ${h.temp}°C, ${h.rain}mm rain, ${h.rainProb}% chance, ${h.wind}kph wind`)
+    .join('\n')
+  return `\n\n72-HOUR OPEN-METEO FORECAST (Philippines local time):\n${summary}`
+}
+
 async function callModel(modelId: string, prompt: string): Promise<Bulletin> {
   const openrouter = createOpenRouterClient()
   const result = await generateObject({
@@ -100,6 +195,7 @@ async function callModel(modelId: string, prompt: string): Promise<Bulletin> {
 async function generateBulletin(
   barangayName: string,
   envData: NormalizedEnvironmentalData,
+  forecastSummary: string,
 ): Promise<Bulletin> {
   const conditionsSummary = [
     `rainfall: ${envData.rainfall_mm_per_hour} mm/h`,
@@ -114,10 +210,10 @@ async function generateBulletin(
     const ragContext = await retrieveRAGContext(barangayName, conditionsSummary)
     ragContextBlock = formatRAGContextForPrompt(ragContext)
   } catch {
-    // RAG failure is non-fatal — generate without context
+    // RAG failure is non-fatal
   }
 
-  const prompt = `Generate a 72-hour risk bulletin for ${barangayName} (lat: ${envData.latitude}, lng: ${envData.longitude}) based on this environmental data:\n\n${JSON.stringify(envData, null, 2)}${ragContextBlock ? `\n\n${ragContextBlock}` : ''}`
+  const prompt = `Generate a 72-hour risk bulletin for ${barangayName} (lat: ${envData.latitude}, lng: ${envData.longitude}) based on this environmental data:\n\n${JSON.stringify(envData, null, 2)}${forecastSummary}${ragContextBlock ? `\n\n${ragContextBlock}` : ''}`
 
   try {
     return await callModel(PRIMARY_MODEL, prompt)
@@ -136,33 +232,35 @@ export async function* runPipeline(
       ? { name: barangayName, latitude: coordinates.lat, longitude: coordinates.lng }
       : BARANGAYS[0])
 
-  // Agent 1: Fetch environmental data
-  yield { type: 'progress', message: 'Fetching environmental data...' }
-  const [nasaData, noaaData] = await Promise.all([
+  // Agent 1: Fetch environmental data from all three sources in parallel
+  yield { type: 'progress', message: 'Fetching environmental data from PAGASA, NASA POWER, and Open-Meteo...' }
+  const [nasaData, noaaData, { normalized: openMeteoData, forecast }] = await Promise.all([
     fetchNasaPower(location.latitude, location.longitude, location.name),
     fetchNoaa(location.latitude, location.longitude, location.name),
+    fetchOpenMeteo(location.latitude, location.longitude, location.name),
   ])
 
-  // Agent 2: Analyze risk level
-  yield { type: 'progress', message: 'Analyzing risk level...' }
-  const envData = mergeEnvironmentalData([nasaData, noaaData])
+  // Agent 2: Analyze and merge risk data
+  yield { type: 'progress', message: 'Analyzing risk level across data sources...' }
+  const envData = mergeEnvironmentalData([nasaData, noaaData, openMeteoData])
+  const forecastSummary = buildForecastSummary(forecast)
 
-  // Agent 3: Generate bulletin
-  yield { type: 'progress', message: 'Generating bulletin...' }
+  // Agent 3: Generate bulletin with full forecast context
+  yield { type: 'progress', message: 'Generating bulletin with 72-hour forecast...' }
   let bulletin: Bulletin
   try {
-    bulletin = await generateBulletin(location.name, envData)
+    bulletin = await generateBulletin(location.name, envData, forecastSummary)
   } catch (err) {
     yield { type: 'error', message: `Bulletin generation failed: ${String(err)}` }
     return
   }
 
-  // Agent 4: Quality check — validate against schema
+  // Agent 4: Quality check
   yield { type: 'progress', message: 'Quality checking...' }
   const parsed = bulletinSchema.safeParse(bulletin)
   if (!parsed.success) {
     try {
-      bulletin = await generateBulletin(location.name, envData)
+      bulletin = await generateBulletin(location.name, envData, forecastSummary)
     } catch (err) {
       yield { type: 'error', message: `Quality check retry failed: ${String(err)}` }
       return
