@@ -17,6 +17,8 @@ import {
   Sun,
   CloudSun,
   Cloud,
+  CloudRain,
+  CloudLightning,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Bulletin } from "@/lib/bulletin-schema";
@@ -40,6 +42,15 @@ import { useLanguage, type AppLanguage } from "@/context/LanguageContext";
 
 type Scenario = "safe" | "moderate" | "evacuate";
 type Language = AppLanguage;
+
+interface ForecastSlot {
+  time: string;
+  temp: number;
+  rain: number;
+  rainProb: number;
+  wind: number;
+  weathercode: number;
+}
 
 const RISK_LEVEL_LABEL: Record<Scenario, string> = {
   safe: "SAFE",
@@ -76,6 +87,31 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function weatherCodeToIcon(code: number) {
+  if (code === 0) return Sun;
+  if (code <= 2) return CloudSun;
+  if (code <= 48) return Cloud;
+  if (code <= 67) return CloudRain;
+  if (code <= 77) return CloudRain;
+  if (code <= 82) return CloudRain;
+  return CloudLightning;
+}
+
+function weatherCodeToRisk(code: number, rainProb: number): { label: string; color: string } {
+  if (code >= 95 || rainProb >= 80) return { label: "HIGH RISK", color: "text-[var(--terracotta)]" };
+  if (code >= 61 || rainProb >= 50) return { label: "MODERATE", color: "text-[var(--golden-yellow)]" };
+  return { label: "SAFE", color: "text-[var(--leaf-green)]" };
+}
+
+function formatForecastTime(isoTime: string): string {
+  try {
+    const d = new Date(isoTime);
+    return d.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: false });
+  } catch {
+    return isoTime.slice(11, 16);
+  }
+}
+
 async function copyTextToClipboard(text: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
@@ -105,11 +141,7 @@ function ListenBulletinButton(props: {
       disabled={isSpeakingBulletin}
       onClick={onListen}
       aria-busy={isSpeakingBulletin}
-      aria-label={
-        isSpeakingBulletin
-          ? "Speaking recommended action"
-          : "Listen to bulletin (recommended action)"
-      }
+      aria-label={isSpeakingBulletin ? "Speaking" : "Listen to bulletin"}
       className={cn(
         "flex items-center gap-2 text-[var(--text-muted)] transition-colors hover:text-white",
         "disabled:pointer-events-none disabled:opacity-70"
@@ -146,6 +178,8 @@ export default function Home() {
   const [savedBarangays, setSavedBarangays] = useState<KairagoBarangays>({ items: [] });
   const [autoTtsEnabled, setAutoTtsEnabled] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [forecastSlots, setForecastSlots] = useState<ForecastSlot[] | null>(null);
+  const [lastSearchCoords, setLastSearchCoords] = useState<{ lat: number; lng: number } | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -224,6 +258,20 @@ export default function Home() {
     if (mapped) setScenario(mapped);
   }, [liveBulletin]);
 
+  // Fetch real forecast when coords are available
+  useEffect(() => {
+    if (!lastSearchCoords) return;
+    const { lat, lng } = lastSearchCoords;
+    fetch(`/api/weather/forecast?lat=${lat}&lng=${lng}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.slots) setForecastSlots(data.slots);
+      })
+      .catch(() => {
+        // keep static fallback
+      });
+  }, [lastSearchCoords]);
+
   useEffect(() => {
     const fetchHealth = async () => {
       try {
@@ -299,6 +347,7 @@ export default function Home() {
       setTranslatedText(null);
       setActiveLanguage("ENGLISH");
       setIsTranslating(false);
+      if (coords) setLastSearchCoords(coords);
       try {
         const res = await fetch("/api/agent/stream", {
           method: "POST",
@@ -547,6 +596,22 @@ export default function Home() {
     return `${pad2(Math.floor(total / 3600))}:${pad2(Math.floor((total % 3600) / 60))}:${pad2(total % 60)}`;
   }, [landfallEtaMs]);
 
+  // Determine overall forecast trend
+  const forecastTrend = useMemo(() => {
+    if (!forecastSlots) return "STABLE TREND";
+    const hasHigh = forecastSlots.some(s => s.rainProb >= 80 || s.weathercode >= 95);
+    const hasModerate = forecastSlots.some(s => s.rainProb >= 50 || s.weathercode >= 61);
+    if (hasHigh) return "WORSENING TREND";
+    if (hasModerate) return "MODERATE TREND";
+    return "STABLE TREND";
+  }, [forecastSlots]);
+
+  const forecastTrendColor = useMemo(() => {
+    if (forecastTrend === "WORSENING TREND") return "text-[var(--terracotta)]";
+    if (forecastTrend === "MODERATE TREND") return "text-[var(--golden-yellow)]";
+    return "text-[var(--leaf-green)]";
+  }, [forecastTrend]);
+
   const ActionRow = () => (
     <div className="flex items-center justify-between pt-4">
       <ListenBulletinButton isSpeakingBulletin={isSpeakingBulletin} onListen={handleListenBulletin} />
@@ -564,6 +629,16 @@ export default function Home() {
     </div>
   );
 
+  // Static fallback forecast cards
+  const staticForecast = [
+    { id: "12-1", time: "12:00", Icon: Sun, rain: "0.2 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+    { id: "18-1", time: "18:00", Icon: CloudSun, rain: "0.5 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+    { id: "00-1", time: "00:00", Icon: Cloud, rain: "1.2 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+    { id: "06-1", time: "06:00", Icon: Cloud, rain: "1.0 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+    { id: "12-2", time: "12:00", Icon: Sun, rain: "0.1 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+    { id: "18-2", time: "18:00", Icon: Sun, rain: "0.0 mm/h", risk: { label: "SAFE", color: "text-[var(--leaf-green)]" } },
+  ];
+
   return (
     <>
       <Toast message={toastMessage} visible={toastVisible} onHide={() => setToastVisible(false)} />
@@ -576,7 +651,7 @@ export default function Home() {
             {[
               { label: "PAGASA", key: "nasa_power" },
               { label: "NOAA", key: "noaa" },
-              { label: "PHIVOLCS", key: "nasa_power" },
+              { label: "Open-Meteo", key: "nasa_power" },
               { label: "System Ok", key: "nasa_power" },
             ].map(({ label, key }) => (
               <div key={label} className="flex items-center gap-1.5">
@@ -742,8 +817,8 @@ export default function Home() {
               <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--leaf-green)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--leaf-green)] opacity-10" />
                 <div className="relative space-y-4 p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
                       <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">STATUS</span>
                       <h2 className="text-[48px] font-extrabold leading-[1.1] text-white">SAFE</h2>
                     </div>
@@ -777,15 +852,13 @@ export default function Home() {
               <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--golden-yellow)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--golden-yellow)] opacity-10" />
                 <div className="relative space-y-4 p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
                       <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">STATUS</span>
-                      <h2 className="text-[clamp(1.8rem,7vw,3rem)] font-extrabold leading-[1.1] whitespace-nowrap text-[var(--golden-yellow)]">
-                        MODERATE RISK
-                      </h2>
+                      <h2 className="text-[28px] font-extrabold leading-[1.1] text-[var(--golden-yellow)]">MODERATE RISK</h2>
                     </div>
-                    <div className="max-w-[140px] shrink-0 rounded-full border border-[var(--golden-yellow)] bg-[color:var(--golden-yellow)]/20 px-2 py-1">
-                      <span className="truncate text-[11px] font-medium uppercase text-[var(--golden-yellow)]">
+                    <div className="max-w-[120px] shrink-0 rounded-full border border-[var(--golden-yellow)] bg-[color:var(--golden-yellow)]/20 px-2 py-1">
+                      <span className="block truncate text-[10px] font-medium uppercase text-[var(--golden-yellow)]">
                         {showLiveModerate ? confidenceLabel : "Advisory Active"}
                       </span>
                     </div>
@@ -813,12 +886,10 @@ export default function Home() {
               <div className="relative mt-4 overflow-hidden rounded-r-xl border-l-4 border-[var(--terracotta)] bg-[var(--surface)]">
                 <div className="pointer-events-none absolute inset-0 bg-[var(--terracotta)] opacity-10" />
                 <div className="relative space-y-4 p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-2">
                       <span className="block text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">STATUS</span>
-                      <h2 className="text-[clamp(1.8rem,7vw,3rem)] font-extrabold leading-[1.1] whitespace-nowrap text-[var(--terracotta)]">
-                        EVACUATE NOW
-                      </h2>
+                      <h2 className="text-[28px] font-extrabold leading-[1.1] text-[var(--terracotta)]">EVACUATE NOW</h2>
                       <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-[color:var(--terracotta)]/40 bg-[color:var(--terracotta)]/15 px-3 py-1">
                         <AlertTriangle className="h-4 w-4 text-[var(--terracotta)]" />
                         <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--terracotta)]">LANDFALL IN</span>
@@ -827,8 +898,8 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                    <div className="max-w-[140px] shrink-0 rounded-full border border-[var(--terracotta)] bg-[color:var(--terracotta)]/20 px-2 py-1">
-                      <span className="truncate text-[11px] font-medium uppercase text-[var(--terracotta)]">
+                    <div className="max-w-[120px] shrink-0 rounded-full border border-[var(--terracotta)] bg-[color:var(--terracotta)]/20 px-2 py-1">
+                      <span className="block truncate text-[10px] font-medium uppercase text-[var(--terracotta)]">
                         {showLiveEvacuate ? confidenceLabel : "Emergency Bulletin"}
                       </span>
                     </div>
@@ -861,31 +932,49 @@ export default function Home() {
         {/* 72-HR RISK FORECAST */}
         <section className="mt-10">
           <div className="mb-4 flex items-end justify-between">
-            <h3 className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">72-HR RISK FORECAST</h3>
-            <span className="text-[11px] font-medium text-[var(--leaf-green)]">STABLE TREND</span>
+            <h3 className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+              72-HR RISK FORECAST
+              {forecastSlots && (
+                <span className="ml-2 text-[9px] text-[var(--leaf-green)]">LIVE</span>
+              )}
+            </h3>
+            <span className={cn("text-[11px] font-medium", forecastTrendColor)}>
+              {forecastTrend}
+            </span>
           </div>
           <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-2">
-            {[
-              { id: "12-1", time: "12:00", Icon: Sun, rain: "0.2 mm/h" },
-              { id: "18-1", time: "18:00", Icon: CloudSun, rain: "0.5 mm/h" },
-              { id: "00-1", time: "00:00", Icon: Cloud, rain: "1.2 mm/h" },
-              { id: "06-1", time: "06:00", Icon: Cloud, rain: "1.0 mm/h" },
-              { id: "12-2", time: "12:00", Icon: Sun, rain: "0.1 mm/h" },
-              { id: "18-2", time: "18:00", Icon: Sun, rain: "0.0 mm/h" },
-            ].map(({ id, time, Icon, rain }) => (
-              <div key={id} className="flex w-24 flex-shrink-0 flex-col items-center gap-2 rounded-xl border border-white/8 bg-[var(--surface-raised)] p-3">
-                <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">{time}</span>
-                <Icon className="h-5 w-5 text-[var(--leaf-green)]" />
-                <span className="text-[11px] font-medium text-[var(--leaf-green)]">SAFE</span>
-                <span className="text-[13px] font-normal text-[var(--text-muted)]">{rain}</span>
-              </div>
-            ))}
+            {forecastSlots
+              ? forecastSlots.map((slot, i) => {
+                  const Icon = weatherCodeToIcon(slot.weathercode);
+                  const risk = weatherCodeToRisk(slot.weathercode, slot.rainProb);
+                  return (
+                    <div key={i} className="flex w-24 flex-shrink-0 flex-col items-center gap-2 rounded-xl border border-white/8 bg-[var(--surface-raised)] p-3">
+                      <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
+                        {formatForecastTime(slot.time)}
+                      </span>
+                      <Icon className={cn("h-5 w-5", risk.color)} />
+                      <span className={cn("text-[10px] font-medium", risk.color)}>{risk.label}</span>
+                      <span className="text-[11px] font-normal text-[var(--text-muted)]">
+                        {slot.rain.toFixed(1)} mm
+                      </span>
+                    </div>
+                  );
+                })
+              : staticForecast.map(({ id, time, Icon, rain, risk }) => (
+                  <div key={id} className="flex w-24 flex-shrink-0 flex-col items-center gap-2 rounded-xl border border-white/8 bg-[var(--surface-raised)] p-3">
+                    <span className="text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">{time}</span>
+                    <Icon className={cn("h-5 w-5", risk.color)} />
+                    <span className={cn("text-[10px] font-medium", risk.color)}>{risk.label}</span>
+                    <span className="text-[11px] font-normal text-[var(--text-muted)]">{rain}</span>
+                  </div>
+                ))
+            }
           </div>
         </section>
 
         {/* Data Attribution */}
         <div className="mt-8 flex flex-wrap gap-2 opacity-60">
-          {["PAGASA", "NASA POWER", "NOAA", "PHIVOLCS"].map((src) => (
+          {["PAGASA", "NASA POWER", "NOAA", "Open-Meteo"].map((src) => (
             <div key={src} className="rounded border border-white/10 bg-white/5 px-2 py-1">
               <span className="text-[9px] font-bold text-[var(--text-muted)]">{src}</span>
             </div>
