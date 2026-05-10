@@ -134,18 +134,16 @@ export async function fetchOpenMeteo(
     const avgTemp = avg(h.temperature_2m)
     const maxPrecipProb = Math.max(...h.precipitation_probability.slice(0, 24))
 
+    // Use fallbackEnvironmentalData as base to match the exact type shape,
+    // then override with real Open-Meteo values
     const normalized: NormalizedEnvironmentalData = {
-      barangay_name: barangay,
-      latitude: lat,
-      longitude: lng,
-      timestamp: new Date().toISOString(),
+      ...fallbackEnvironmentalData(barangay, lat, lng),
       rainfall_mm_per_hour: Math.round(avgRainfall * 10) / 10,
       wind_speed_kph: Math.round(avgWind * 10) / 10,
       humidity_percentage: Math.round(avgHumidity),
       temperature_celsius: Math.round(avgTemp * 10) / 10,
       storm_surge_risk: maxPrecipProb > 80,
       data_sources: ['Open-Meteo'],
-      raw: data,
     }
 
     return { normalized, forecast: data }
