@@ -12,9 +12,8 @@ export default function AboutPage() {
     <>
       <Header />
 
-      {/* Main Content Canvas */}
       <main className="mx-auto w-full max-w-screen-sm flex-grow px-4 pb-24">
-        {/* Hero Section: About Kairago */}
+        {/* Hero Section */}
         <section className="mb-10 mt-8">
           <h1 className="mb-1 text-[24px] font-bold text-[var(--leaf-green)]">
             ABOUT KAIRAGO
@@ -22,14 +21,79 @@ export default function AboutPage() {
           <p className="mb-4 text-[20px] font-normal leading-tight text-[var(--text-primary)]">
             Intelligence at the critical moment
           </p>
-          <div className="tonal-border relative mb-6 aspect-video w-full overflow-hidden rounded-xl">
-            <img
-              className="h-full w-full object-cover opacity-60"
-              alt="A high-tech digital visualization of atmospheric data flowing across a dark globe."
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6F-CPTPtuRxuWXPuIsTelE1s264Zv6-qRYoUtKU8-j2LBeWKB5dZCT2yR6ttyioI81XrI_ecVdVeglyDctV-Q76CpO7OozHdWTzQfOPanPkR7pebMFmJRT7IeIlmXM38bHx0PbUTTyFtA_H6filxhlB1gH3dXFKmba2KqNkYuFpflhXyzue46RZmOKcITfCAgeyMF1-H02CfcUnrINX6CcNbgt6UA1g_cfDGPBd0KMWNTpL_upkZWgy8CiePxzMJRqQRF1fUE1xaR"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] to-transparent" />
+
+          {/* Philippine SVG Map — replaces AI globe image */}
+          <div className="tonal-border relative mb-6 w-full overflow-hidden rounded-xl bg-[#0D1F15]" style={{ height: "220px" }}>
+            <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" className="h-full w-full">
+              {/* Island outlines — simplified */}
+              <ellipse cx="220" cy="75" rx="18" ry="30" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="235" cy="118" rx="12" ry="22" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="212" cy="138" rx="10" ry="18" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="196" cy="88" rx="8" ry="14" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="242" cy="153" rx="14" ry="20" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="202" cy="163" rx="10" ry="14" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+              <ellipse cx="162" cy="128" rx="9" ry="16" fill="none" stroke="#2D4A3E" strokeWidth="1.5" />
+
+              {/* Connection lines */}
+              <line x1="220" y1="75" x2="235" y2="118" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.3" />
+              <line x1="235" y1="118" x2="242" y2="153" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.3" />
+              <line x1="220" y1="75" x2="196" y2="88" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.3" />
+              <line x1="212" y1="138" x2="202" y2="163" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.3" />
+              <line x1="162" y1="128" x2="212" y2="138" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.3" />
+              <line x1="220" y1="75" x2="162" y2="128" stroke="#4ADE80" strokeWidth="0.5" strokeOpacity="0.2" />
+
+              {/* Marker — Luzon (SAFE) */}
+              <circle cx="220" cy="75" r="6" fill="#4ADE80" opacity="0.9" />
+              <circle cx="220" cy="75" r="6" fill="none" stroke="#4ADE80" strokeWidth="2">
+                <animate attributeName="r" from="6" to="18" dur="1.8s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.8" to="0" dur="1.8s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Marker — Visayas (MODERATE RISK) */}
+              <circle cx="235" cy="132" r="6" fill="#F59E0B" opacity="0.9" />
+              <circle cx="235" cy="132" r="6" fill="none" stroke="#F59E0B" strokeWidth="2">
+                <animate attributeName="r" from="6" to="18" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Marker — Leyte (EVACUATE NOW) */}
+              <circle cx="252" cy="153" r="6" fill="#EF4444" opacity="0.9" />
+              <circle cx="252" cy="153" r="6" fill="none" stroke="#EF4444" strokeWidth="2">
+                <animate attributeName="r" from="6" to="18" dur="1.5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Marker — Palawan (SAFE) */}
+              <circle cx="162" cy="128" r="6" fill="#4ADE80" opacity="0.9" />
+              <circle cx="162" cy="128" r="6" fill="none" stroke="#4ADE80" strokeWidth="2">
+                <animate attributeName="r" from="6" to="18" dur="2.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.8" to="0" dur="2.2s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Marker — Mindanao (SAFE) */}
+              <circle cx="222" cy="188" r="6" fill="#4ADE80" opacity="0.9" />
+              <circle cx="222" cy="188" r="6" fill="none" stroke="#4ADE80" strokeWidth="2">
+                <animate attributeName="r" from="6" to="18" dur="1.9s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.8" to="0" dur="1.9s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Labels */}
+              <text x="228" y="71" fill="#4ADE80" fontSize="8" fontFamily="sans-serif" opacity="0.8">Luzon</text>
+              <text x="240" y="129" fill="#F59E0B" fontSize="8" fontFamily="sans-serif" opacity="0.8">Visayas</text>
+              <text x="257" y="150" fill="#EF4444" fontSize="8" fontFamily="sans-serif" opacity="0.8">Leyte</text>
+              <text x="118" y="126" fill="#4ADE80" fontSize="8" fontFamily="sans-serif" opacity="0.8">Palawan</text>
+              <text x="224" y="202" fill="#4ADE80" fontSize="8" fontFamily="sans-serif" opacity="0.8">Mindanao</text>
+
+              {/* Legend */}
+              <circle cx="22" cy="16" r="4" fill="#4ADE80" />
+              <text x="30" y="20" fill="#4ADE80" fontSize="7" fontFamily="sans-serif" opacity="0.7">SAFE</text>
+              <circle cx="22" cy="30" r="4" fill="#F59E0B" />
+              <text x="30" y="34" fill="#F59E0B" fontSize="7" fontFamily="sans-serif" opacity="0.7">MODERATE RISK</text>
+              <circle cx="22" cy="44" r="4" fill="#EF4444" />
+              <text x="30" y="48" fill="#EF4444" fontSize="7" fontFamily="sans-serif" opacity="0.7">EVACUATE NOW</text>
+            </svg>
           </div>
+
           <p className="text-[15px] font-normal leading-[1.5] text-[var(--text-body)]">
             Kairago serves as a vital intelligence bridge, translating national
             scientific weather data into actionable local insights. We operate
@@ -38,7 +102,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        {/* Real-Time Data Sources: 2x2 Bento Grid */}
+        {/* Real-Time Data Sources */}
         <section className="mb-10">
           <h2 className="mb-4 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
             REAL-TIME DATA SOURCES
@@ -49,9 +113,7 @@ export default function AboutPage() {
                 <Cloud className="h-5 w-5 text-[var(--leaf-green)]" />
                 <div className="h-2 w-2 rounded-full bg-[var(--leaf-green)]" />
               </div>
-              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">
-                PAGASA
-              </h3>
+              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">PAGASA</h3>
               <p className="text-[13px] font-normal text-[var(--text-muted)]">
                 Local atmospheric patterns and tropical cyclone tracking.
               </p>
@@ -62,9 +124,7 @@ export default function AboutPage() {
                 <Globe className="h-5 w-5 text-[var(--leaf-green)]" />
                 <div className="h-2 w-2 rounded-full bg-[var(--leaf-green)]" />
               </div>
-              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">
-                NASA POWER
-              </h3>
+              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">NASA POWER</h3>
               <p className="text-[13px] font-normal text-[var(--text-muted)]">
                 Global climatology data and solar radiation monitoring.
               </p>
@@ -75,9 +135,7 @@ export default function AboutPage() {
                 <Waves className="h-5 w-5 text-[var(--leaf-green)]" />
                 <div className="h-2 w-2 rounded-full bg-[var(--leaf-green)]" />
               </div>
-              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">
-                NOAA
-              </h3>
+              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">NOAA</h3>
               <p className="text-[13px] font-normal text-[var(--text-muted)]">
                 Oceanic disturbances and oceanic-atmospheric shifts.
               </p>
@@ -88,9 +146,7 @@ export default function AboutPage() {
                 <Thermometer className="h-5 w-5 text-[var(--leaf-green)]" />
                 <div className="h-2 w-2 rounded-full bg-[var(--leaf-green)]" />
               </div>
-              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">
-                PHIVOLCS
-              </h3>
+              <h3 className="mb-1 text-[17px] font-bold text-[var(--text-primary)]">PHIVOLCS</h3>
               <p className="text-[13px] font-normal text-[var(--text-muted)]">
                 Seismic activity and volcanic threat assessments.
               </p>
@@ -98,7 +154,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* How It Works: Vertical Timeline */}
+        {/* How It Works */}
         <section className="mb-10">
           <h2 className="mb-4 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
             HOW IT WORKS
@@ -108,7 +164,7 @@ export default function AboutPage() {
               {
                 step: "1",
                 title: "Continuous Ingestion",
-                body: "Global and local satellite feeds updated every 15 minutes.",
+                body: "Environmental data fetched from PAGASA, NASA POWER, NOAA, and PHIVOLCS on each bulletin request.",
               },
               {
                 step: "2",
@@ -129,19 +185,15 @@ export default function AboutPage() {
                   {item.step}
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[var(--text-primary)]">
-                    {item.title}
-                  </h4>
-                  <p className="text-[13px] font-normal text-[var(--text-muted)]">
-                    {item.body}
-                  </p>
+                  <h4 className="text-sm font-bold text-[var(--text-primary)]">{item.title}</h4>
+                  <p className="text-[13px] font-normal text-[var(--text-muted)]">{item.body}</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Project Meta: Built at CodeKada */}
+        {/* Built at CodeKada */}
         <section className="mb-12">
           <h2 className="mb-4 text-[11px] font-medium tracking-[0.1em] text-[var(--text-muted)]">
             BUILT AT CODEKADA 2026
@@ -170,4 +222,3 @@ export default function AboutPage() {
     </>
   );
 }
-
