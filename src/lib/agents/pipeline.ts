@@ -124,7 +124,6 @@ export async function fetchOpenMeteo(
     const data: OpenMeteoForecast = await res.json()
     const h = data.hourly
 
-    // Use the next 6 hours average for current conditions
     const slice = 6
     const avg = (arr: number[]) =>
       arr.slice(0, slice).reduce((a, b) => a + b, 0) / Math.min(slice, arr.length)
@@ -135,7 +134,6 @@ export async function fetchOpenMeteo(
     const avgTemp = avg(h.temperature_2m)
     const maxPrecipProb = Math.max(...h.precipitation_probability.slice(0, 24))
 
-    // Build a normalized data object from Open-Meteo
     const normalized: NormalizedEnvironmentalData = {
       barangay_name: barangay,
       latitude: lat,
@@ -145,7 +143,7 @@ export async function fetchOpenMeteo(
       wind_speed_kph: Math.round(avgWind * 10) / 10,
       humidity_percentage: Math.round(avgHumidity),
       temperature_celsius: Math.round(avgTemp * 10) / 10,
-      storm_surge_risk: maxPrecipProb > 80 ? 'HIGH' : maxPrecipProb > 50 ? 'MODERATE' : 'LOW',
+      storm_surge_risk: maxPrecipProb > 80,
       data_sources: ['Open-Meteo'],
       raw: data,
     }
@@ -232,7 +230,6 @@ export async function* runPipeline(
       ? { name: barangayName, latitude: coordinates.lat, longitude: coordinates.lng }
       : BARANGAYS[0])
 
-  // Agent 1: Fetch environmental data from all three sources in parallel
   yield { type: 'progress', message: 'Fetching environmental data from PAGASA, NASA POWER, and Open-Meteo...' }
   const [nasaData, noaaData, { normalized: openMeteoData, forecast }] = await Promise.all([
     fetchNasaPower(location.latitude, location.longitude, location.name),
@@ -240,12 +237,10 @@ export async function* runPipeline(
     fetchOpenMeteo(location.latitude, location.longitude, location.name),
   ])
 
-  // Agent 2: Analyze and merge risk data
   yield { type: 'progress', message: 'Analyzing risk level across data sources...' }
   const envData = mergeEnvironmentalData([nasaData, noaaData, openMeteoData])
   const forecastSummary = buildForecastSummary(forecast)
 
-  // Agent 3: Generate bulletin with full forecast context
   yield { type: 'progress', message: 'Generating bulletin with 72-hour forecast...' }
   let bulletin: Bulletin
   try {
@@ -255,7 +250,6 @@ export async function* runPipeline(
     return
   }
 
-  // Agent 4: Quality check
   yield { type: 'progress', message: 'Quality checking...' }
   const parsed = bulletinSchema.safeParse(bulletin)
   if (!parsed.success) {
@@ -267,7 +261,6 @@ export async function* runPipeline(
     }
   }
 
-  // Agent 5: Ready
   yield { type: 'progress', message: 'Ready.' }
   yield { type: 'bulletin', data: bulletin, barangay: location.name, environmental_data: envData }
 }
